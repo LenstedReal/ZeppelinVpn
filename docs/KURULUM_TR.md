@@ -16,7 +16,7 @@ cd ~
 [ -d ZeppelinVpn ] || git clone https://github.com/LenstedReal/ZeppelinVpn.git
 cd ZeppelinVpn
 git fetch ~/storage/downloads/ZeppelinVPN-expo-2.0.0.bundle expo:expo
-git log --oneline -8 expo       # 7 commit görmelisin
+git log --oneline -10 expo      # 9 commit görmelisin
 ```
 
 İsteğe bağlı güvence (eski Kotlin sürümüne etiket koyar, hiçbir şeyi silmez):

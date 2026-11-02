@@ -31,12 +31,13 @@ Sunucu betiği denemesinde doğrulananlar: ilk kurulum, ikinci kurulumda kuralla
 
 1. Eski Zeppelin VPN'i kaldır, yeni APK'yı kur ve aç. Dil doğru mu?
 2. Profiller → Elle yaz: bozuk bir metin yaz, Türkçe hata satırlarını gör. Sonra betiğin verdiği profili **Panodan yapıştır** ile ekle.
-3. **BAĞLAN** → Android izni → "Bağlanıyor…" → "Korunuyorsun". Son el sıkışma birkaç saniye önce olmalı, hızlar değişmeli, **Çıkış IP** sunucunun IP'si olmalı.
-4. **Kill switch:** sunucuda `sudo systemctl stop wg-quick@wg0`. En geç yaklaşık 3 dakika içinde "Bağlantı koptu, yeniden deneniyor" görünmeli ve internet durmalı (WireGuard oturumu 180 saniye geçerli kalır, tespit süresi buradan gelir; "İnternet erişimi: Yok" satırı genelde daha erken görünür). Sonra `sudo systemctl start wg-quick@wg0`: bağlantı kendiliğinden düzelmeli.
-5. **KES:** internet hemen gelmeli.
-6. Wi-Fi ↔ mobil veri geçişi: bağlantı kopmadan devam etmeli.
-7. Ayarlar → Android VPN ayarları → Her zaman açık VPN + VPN olmadan bağlantıları engelle → telefonu yeniden başlat: kendiliğinden bağlanmalı.
-8. Her zaman açık kapalıyken "Telefon açılınca bağlan"ı aç → yeniden başlat: bağlanmalı.
-9. Ayarlar → Tüm verileri sil: profiller ve ayarlar gitmeli, VPN kapanmalı.
+3. İlk **BAĞLAN**'da "VPN bağlantısı hakkında" ekranı çıkmalı: "Şimdi değil" bağlanmamalı; "Kabul et ve bağlan" Android'in VPN iznini açmalı. Bu ekran bir kez gösterilir.
+4. Android izni → "Bağlanıyor…" → "Korunuyorsun". Son el sıkışma birkaç saniye önce olmalı, hızlar değişmeli, **Çıkış IP** sunucunun IP'si olmalı.
+5. **Kill switch:** sunucuda `sudo systemctl stop wg-quick@wg0`. En geç yaklaşık 3 dakika içinde "Bağlantı koptu, yeniden deneniyor" görünmeli ve internet durmalı (WireGuard oturumu 180 saniye geçerli kalır, tespit süresi buradan gelir; "İnternet erişimi: Yok" satırı genelde daha erken görünür). Sonra `sudo systemctl start wg-quick@wg0`: bağlantı kendiliğinden düzelmeli.
+6. **KES:** internet hemen gelmeli.
+7. Wi-Fi ↔ mobil veri geçişi: bağlantı kopmadan devam etmeli.
+8. Ayarlar → Android VPN ayarları → Her zaman açık VPN + VPN olmadan bağlantıları engelle → telefonu yeniden başlat: kendiliğinden bağlanmalı.
+9. Her zaman açık kapalıyken "Telefon açılınca bağlan"ı aç → yeniden başlat: bağlanmalı.
+10. Ayarlar → Tüm verileri sil: profiller ve ayarlar gitmeli, VPN kapanmalı.
 
 Bir adım beklendiği gibi çalışmazsa ekran görüntüsü ve mümkünse `adb logcat -s ZeppelinVpn WireGuard/GoBackend` çıktısını gönder.

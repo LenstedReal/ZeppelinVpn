@@ -23,6 +23,7 @@ Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Eski Kotlin kodu `ma
 - **Profil içe aktarma:** panodan, dosyadan veya elle; satır numaralı Türkçe/İngilizce hata ve uyarılar; sunucu dosyası (wg0.conf) yanlışlıkla yapıştırılırsa açık uyarı; ekranda anahtarlar gizli.
 - **Ayarlar:** DNS (profil, Cloudflare, Quad9, AdGuard, Google, özel), MTU, keepalive, kill switch, otomatik bağlanma seçenekleri, çıkış IP kontrolü, tüm verileri silme.
 - **Oracle:** tek satırlık kurulum komutu (sha256 doğrulamalı), `status / add / show / list / remove / repair` komutları, uygulama içinde adım adım rehber ve sorun giderme.
+- **Uygulama içi VPN açıklaması:** ilk bağlanmadan önce, Android'in izin penceresinden önce, VPN'in ne yaptığını ve verilerin nereye gittiğini anlatan kabul/ret ekranı (Google Play VpnService politikasının istediği "belirgin açıklama").
 - **Türkçe ve İngilizce arayüz**, yeni yüksek çözünürlüklü logodan ikon, açılış ekranı ve Play görselleri.
 - **GitHub Actions:** her push'ta testler, ShellCheck, imzalı APK + AAB, imza sertifikası kontrolü, etiketlerde GitHub Release.
 

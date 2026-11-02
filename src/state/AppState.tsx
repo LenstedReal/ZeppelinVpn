@@ -49,7 +49,10 @@ interface AppStateValue {
   exitState: ExitState;
   refreshExit: () => void;
   busy: boolean;
-  connect: () => Promise<void>;
+  connect: (opts?: { disclosureAccepted?: boolean }) => Promise<void>;
+  disclosureOpen: boolean;
+  acceptDisclosure: () => void;
+  declineDisclosure: () => void;
   disconnect: () => Promise<void>;
   reconnect: () => Promise<void>;
   errorText: string | null;
@@ -115,6 +118,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [disclosureOpen, setDisclosureOpen] = useState(false);
   const [appActive, setAppActive] = useState(true);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSample = useRef<{ rx: number; tx: number; at: number } | null>(null);
@@ -305,10 +309,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const selectedProfile = vault.profiles.find((p) => p.id === vault.selectedId) ?? null;
 
   // ---- tunnel control
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (opts?: { disclosureAccepted?: boolean }) => {
     setErrorText(null);
     if (!native) {
       setErrorText(translate(lang, 'home.noNative'));
+      return;
+    }
+    // Google Play VpnService policy: explain the VPN in the app before Android's own permission dialog.
+    if (!settings.vpnDisclosureAccepted && !opts?.disclosureAccepted) {
+      setDisclosureOpen(true);
       return;
     }
     const profile = vaultRef.current.profiles.find((p) => p.id === vaultRef.current.selectedId);
@@ -340,6 +349,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [native, lang, settings, errorMessage, issueText]);
 
+  const acceptDisclosure = useCallback(() => {
+    setDisclosureOpen(false);
+    updateSettings({ vpnDisclosureAccepted: true });
+    connect({ disclosureAccepted: true });
+  }, [connect, updateSettings]);
+
+  const declineDisclosure = useCallback(() => {
+    setDisclosureOpen(false);
+    showToast(translate(lang, 'disclosure.declined'));
+  }, [lang, showToast]);
+
   const disconnect = useCallback(async () => {
     setErrorText(null);
     if (!native) return;
@@ -360,10 +380,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready || autoConnectDone.current) return;
     autoConnectDone.current = true;
-    if (settings.connectOnLaunch && native && !status.tunnelUp && vault.selectedId) {
+    if (settings.connectOnLaunch && settings.vpnDisclosureAccepted && native && !status.tunnelUp && vault.selectedId) {
       connect();
     }
-  }, [ready, settings.connectOnLaunch, native, status.tunnelUp, vault.selectedId, connect]);
+  }, [ready, settings.connectOnLaunch, settings.vpnDisclosureAccepted, native, status.tunnelUp, vault.selectedId, connect]);
 
   const resetAll = useCallback(async () => {
     if (native) {
@@ -409,6 +429,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     refreshExit: runExitCheck,
     busy,
     connect,
+    disclosureOpen,
+    acceptDisclosure,
+    declineDisclosure,
     disconnect,
     reconnect,
     errorText,

@@ -70,6 +70,18 @@ export const tr = {
   'alwaysOn.openFailed': 'Ayarlar açılamadı. Elle aç: Ayarlar → Ağ ve internet → VPN.',
   'alwaysOn.note': 'Her zaman açık VPN etkinken uygulamada “KES”e basarsan Android VPN’i hemen yeniden açar. Tamamen kapatmak için bu seçeneği Android ayarlarından kapat.',
 
+  // in-app VPN disclosure (shown once, before Android's VPN permission dialog)
+  'disclosure.title': 'VPN bağlantısı hakkında',
+  'disclosure.body': 'Zeppelin VPN, Android’in VpnService özelliğini kullanarak telefonundaki tüm internet trafiğini şifreli bir WireGuard tüneliyle senin seçtiğin sunucuya (profildeki Endpoint) gönderir.',
+  'disclosure.point1': 'Uygulama ve geliştirici trafiğini görmez, kaydetmez ve hiçbir yere göndermez.',
+  'disclosure.point2': 'Profillerin yalnızca bu telefonda, şifreli olarak saklanır.',
+  'disclosure.point3': 'Bağlıyken çıkış IP’n Cloudflare’den okunur; bunu Ayarlar’dan kapatabilirsin.',
+  'disclosure.point4': 'Sunucuyu işleten (kendi sunucunsa sen) trafiğinin üst verisini görebilir.',
+  'disclosure.next': 'Devam edersen Android ayrıca kendi VPN izin penceresini gösterecek.',
+  'disclosure.accept': 'Kabul et ve bağlan',
+  'disclosure.decline': 'Şimdi değil',
+  'disclosure.declined': 'VPN izni olmadan bağlanılamaz. İstediğin zaman tekrar deneyebilirsin.',
+
   // errors
   'error.NO_PERMISSION': 'VPN izni verilmedi. Bağlanmak için Android’in sorduğu izne “Tamam” de.',
   'error.BAD_CONFIG': 'Profil geçersiz: {detail}',
@@ -284,6 +296,17 @@ export const en: Record<StringKey, string> = {
   'alwaysOn.hide': 'Hide',
   'alwaysOn.openFailed': 'Could not open settings. Open them yourself: Settings → Network & internet → VPN.',
   'alwaysOn.note': 'While Always-on VPN is enabled, tapping “DISCONNECT” in the app makes Android start the VPN again right away. To turn it off completely, disable that option in Android settings.',
+
+  'disclosure.title': 'About the VPN connection',
+  'disclosure.body': 'Zeppelin VPN uses Android’s VpnService to send all internet traffic from this phone through an encrypted WireGuard tunnel to the server you chose (the Endpoint in your profile).',
+  'disclosure.point1': 'The app and its developer do not see, log or send your traffic anywhere.',
+  'disclosure.point2': 'Your profiles are stored only on this phone, encrypted.',
+  'disclosure.point3': 'While connected, your exit IP is read from Cloudflare; you can turn this off in Settings.',
+  'disclosure.point4': 'Whoever runs the server (you, if it is your own) can see traffic metadata.',
+  'disclosure.next': 'If you continue, Android will also show its own VPN permission dialog.',
+  'disclosure.accept': 'Accept and connect',
+  'disclosure.decline': 'Not now',
+  'disclosure.declined': 'You cannot connect without the VPN permission. You can try again any time.',
 
   'error.NO_PERMISSION': 'VPN permission was not granted. Tap “OK” in Android’s dialog to connect.',
   'error.BAD_CONFIG': 'The profile is invalid: {detail}',

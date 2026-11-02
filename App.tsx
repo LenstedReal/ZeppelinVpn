@@ -8,6 +8,7 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { ProfilesScreen } from './src/screens/ProfilesScreen';
 import { ServerScreen } from './src/screens/ServerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { VpnDisclosure } from './src/components/VpnDisclosure';
 import { colors, radius, space } from './src/theme';
 
 function Root() {
@@ -40,6 +41,7 @@ function Root() {
           <Text style={styles.toast}>{app.toast}</Text>
         </View>
       ) : null}
+      <VpnDisclosure />
       <TabBar
         tab={tab}
         onChange={setTab}

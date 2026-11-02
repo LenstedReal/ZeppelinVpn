@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# generated native projects (created by "npx expo prebuild" in CI)
+# Root only: modules/zeppelin-vpn/android is source code and must be committed.
+/android/
+/ios/
+
+# Expo / build output
+.expo/
+dist/
+web-build/
+*.apk
+*.aab
+
+# secrets: never commit these
+*.keystore
+*.jks
+*.p12
+*.b64
+keystore*.txt
+.env
+.env.*
+google-services.json
+
+# misc
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+.DS_Store

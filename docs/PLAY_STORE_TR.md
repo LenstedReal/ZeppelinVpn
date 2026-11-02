@@ -6,8 +6,10 @@ Google Play, **VpnService kullanmasına izin verilen uygulamaların Kuruluş (Or
 
 Seçenekler:
 
-1. **Kuruluş hesabı:** kayıtlı bir işletme (şirket ya da şahıs şirketi) ve ücretsiz alınan D-U-N-S numarası ile yeni bir geliştirici hesabı. Kuruluş hesaplarında kişisel hesaplardaki "12 test kullanıcısı, 14 gün kapalı test" şartı yoktur.
+1. **Mevcut hesabı Kuruluş hesabına çevirmek** ([Google'ın anlatımı](https://support.google.com/googleplay/android-developer/answer/16260648)): Play Console → **Geliştirici hesabı → Hakkınızda → Hesap türünü değiştir**. Gerekenler: kimlik doğrulaması tamamlanmış kişisel hesap, doğrulanmış bir kuruluş web sitesi, kuruluşun D-U-N-S numarası (Dun & Bradstreet'ten ücretsiz alınır, bunun için kayıtlı bir işletme gerekir: şirket ya da şahıs şirketi) ve kuruluşun iletişim bilgileri. Geçişten sonra yeni uygulama göndermeden önce 72 saat beklenmesi öneriliyor. Kuruluştan kişisel hesaba geri dönülemez; Derby Arena gibi mevcut uygulamalar hesapta kalır.
 2. **Play dışında dağıtım:** APK'yı GitHub Releases'ten paylaşmak (iş akışı `v*` etiketlerinde bunu otomatik yapar). Google, 30 Eylül 2026'da Brezilya, Endonezya, Singapur ve Tayland'da başlayan geliştirici doğrulamasını 2027'de tüm ülkelere yaymayı planlıyor. O zaman doğrulanmamış geliştiricilerin APK'ları ek adımlarla kurulabilecek; hobi geliştiricileri için 20 cihaza kadar ücretsiz "sınırlı dağıtım" hesabı da var.
+
+Hesabının türünü görmek için: Play Console → **Geliştirici hesabı → Hakkınızda**. "Kuruluş" yazıyorsa hiçbir engel yok; "Kişisel" yazıyorsa yukarıdaki iki yoldan birini seç.
 
 Aşağıdaki her şey Kuruluş hesabıyla yayın için hazırdır.
 

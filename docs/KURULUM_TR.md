@@ -36,17 +36,17 @@ ls ~/*.keystore ~/storage/downloads/*.keystore 2>/dev/null
 
 ### Yol A: `gh` ile (önerilen, şifre ekrana ve dosyaya yazılmaz)
 
-```bash
-pkg install -y gh
-gh auth login                   # GitHub.com → HTTPS → Login with a web browser
-KS=~/derby-upload.keystore      # dosya başka yerdeyse yolunu yaz
-R=LenstedReal/ZeppelinVpn
-base64 -w 0 "$KS" | gh secret set ANDROID_KEYSTORE_BASE64 -R $R
-gh secret set ANDROID_KEY_ALIAS -R $R --body derby
-gh secret set ANDROID_KEYSTORE_PASSWORD -R $R     # keystore şifresini yaz, Enter (görünmez)
-gh secret set ANDROID_KEY_PASSWORD -R $R          # anahtar şifresi (keytool'da aynı verdiysen aynısı)
-gh secret list -R $R                              # 4 sır görünmeli
-```
+**Komutları tek tek çalıştır, birini bitirmeden diğerini yapıştırma.** `gh auth login` ve şifre soran komutlar etkileşimli: hepsi birden yapıştırılırsa sonraki satırlar soruların cevabı olarak yutulur (örneğin bir komut satırı şifre diye kaydedilir).
+
+1. `pkg install -y gh` (bitmesini bekle)
+2. `gh auth login` → sırasıyla **GitHub.com**, **HTTPS**, Git için oturum: **Y**, **Login with a web browser**. Ekranda 8 haneli bir kod çıkar; tarayıcıda `https://github.com/login/device` adresini aç, kodu gir, onayla. Termux'ta "Logged in as LenstedReal" görmelisin.
+3. `gh auth status` (giriş yapıldığını doğrular)
+4. `R=LenstedReal/ZeppelinVpn`
+5. `base64 -w 0 ~/derby-upload.keystore | gh secret set ANDROID_KEYSTORE_BASE64 -R $R`
+6. `gh secret set ANDROID_KEY_ALIAS -R $R --body derby`
+7. `gh secret set ANDROID_KEYSTORE_PASSWORD -R $R` → "Paste your secret" sorusuna keystore şifresini yaz (görünmez), Enter
+8. `gh secret set ANDROID_KEY_PASSWORD -R $R` → anahtar şifresi (keytool'da anahtar şifresi sorulunca Enter'a bastıysan keystore şifresiyle aynıdır)
+9. `gh secret list -R $R` → 4 sır görünmeli
 
 ### Yol B: GitHub web sitesinden
 

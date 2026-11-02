@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <uses-permission android:name="android.permission.INTERNET" />
+  <!-- Needed to watch Wi-Fi / mobile data changes (ConnectivityManager.registerNetworkCallback). -->
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- Only used when the user enables "Connect when the phone starts". -->
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+  <application>
+    <!--
+      The VPN service itself (com.wireguard.android.backend.GoBackend$VpnService) is declared
+      by the WireGuard tunnel library and merged automatically. It supports Android's
+      "Always-on VPN"; ZeppelinApplicationLifecycleListener restores the tunnel when Android starts it.
+    -->
+    <receiver
+      android:name="expo.modules.zeppelinvpn.BootReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
+  </application>
+
+</manifest>

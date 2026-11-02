@@ -1,0 +1,25 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.lenstedreal.zeppelinvpn'
+version = '2.0.0'
+
+android {
+  namespace "expo.modules.zeppelinvpn"
+
+  defaultConfig {
+    versionCode 1
+    versionName "2.0.0"
+    // Keeps the WireGuard JNI classes when the app is built with R8 (on by default since Expo SDK 58).
+    consumerProguardFiles "consumer-rules.pro"
+  }
+}
+
+dependencies {
+  // Official WireGuard userspace tunnel (wireguard-go + Android VpnService), Apache-2.0.
+  // Published by the WireGuard project on Maven Central. Replaces the unverified
+  // "tunnel-norecord.aar" that the old Kotlin app shipped inside the repository.
+  implementation "com.wireguard.android:tunnel:1.0.20260102"
+}

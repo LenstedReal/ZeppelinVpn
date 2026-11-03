@@ -1,6 +1,7 @@
 {
   "version": 1,
   "servers": [
-    {"id":"158-101-173-231","name":"Frankfurt","country":"DE","apiUrl":"http://158.101.173.231:51821","serverPublicKey":"5dyfznfuc1D1BUFkDPmeK7THkCPXtdTpGHsRD+eHYgI=","operator":"LenstedReal"}
+    {"id":"158-101-173-231","name":"Frankfurt","country":"DE","apiUrl":"http://158.101.173.231:51821","serverPublicKey":"5dyfznfuc1D1BUFkDPmeK7THkCPXtdTpGHsRD+eHYgI=","operator":"LenstedReal"},
+    {"id":"89-168-84-2","name":"Frankfurt 2","country":"DE","apiUrl":"http://89.168.84.2:51821","serverPublicKey":"VZKcjWF0spjHr0jtMHdhM0DWDQRxOV4hboREKhS/VD8=","operator":"LenstedReal"}
   ]
 }

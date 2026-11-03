@@ -17,6 +17,7 @@ import com.wireguard.config.Config
 import com.wireguard.crypto.Key
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
+import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -587,10 +588,21 @@ object TunnelManager {
   private fun emit() {
     val snap = buildSnapshot()
     lastSnapshot = snap
+    StatusNotifier.update(app, snap, setting("statusNotification", true), notificationLanguage())
     try {
       listener?.invoke(snap)
     } catch (e: Exception) {
       Log.w(TAG, "listener", e)
     }
+  }
+
+  private fun notificationLanguage(): String {
+    val chosen = try {
+      JSONObject(loadSettings() ?: "{}").optString("language", "auto")
+    } catch (e: Exception) {
+      "auto"
+    }
+    val code = if (chosen == "tr" || chosen == "en") chosen else Locale.getDefault().language
+    return if (code.lowercase(Locale.ROOT).startsWith("tr")) "tr" else "en"
   }
 }

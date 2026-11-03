@@ -1,5 +1,6 @@
 package expo.modules.zeppelinvpn
 
+import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -7,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.net.VpnService
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -99,6 +101,7 @@ class ZeppelinVpnModule : Module() {
 
     AsyncFunction("vaultClear") {
       SecureVault.clear(context)
+      StatusNotifier.cancel(context)
     }
 
     // Lets the user pick a .conf file with the system file picker and returns its text.
@@ -139,6 +142,40 @@ class ZeppelinVpnModule : Module() {
     Function("openVpnSettings") {
       try {
         context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+      } catch (e: Exception) {
+        false
+      }
+    }
+
+    // Live status notification permission (runtime permission on Android 13+).
+    Function("notificationsAllowed") {
+      StatusNotifier.allowed(context)
+    }
+
+    // Shows Android's "Allow notifications?" dialog. Returns false when no dialog could be shown
+    // (older Android, or the user blocked it); the app then offers the notification settings.
+    // The result is read again when the app returns to the foreground.
+    Function("requestNotificationPermission") {
+      if (StatusNotifier.allowed(context)) return@Function true
+      if (Build.VERSION.SDK_INT < 33) return@Function false
+      val activity = appContext.activityProvider?.currentActivity ?: return@Function false
+      mainHandler.post {
+        try {
+          activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+        } catch (e: Exception) {
+          // nothing to do; the settings button remains
+        }
+      }
+      true
+    }
+
+    Function("openNotificationSettings") {
+      try {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+          .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+          .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
         true
       } catch (e: Exception) {
         false
@@ -213,6 +250,7 @@ class ZeppelinVpnModule : Module() {
   companion object {
     private const val REQUEST_VPN = 0x5A01
     private const val REQUEST_PICK = 0x5A02
+    private const val REQUEST_NOTIFICATIONS = 0x5A03
     private const val MAX_FILE_BYTES = 64 * 1024
   }
 }

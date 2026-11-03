@@ -90,6 +90,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
             ZEPPELIN <Text style={styles.brandAccent}>VPN</Text>
           </Text>
           <Text style={styles.tagline}>{t('brand.tagline')}</Text>
+          <Text style={styles.byline}>{t('brand.by')}</Text>
         </View>
       </View>
 
@@ -231,6 +232,7 @@ const styles = StyleSheet.create({
   brand: { color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: 3 },
   brandAccent: { color: colors.crimson },
   tagline: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  byline: { color: colors.crimson, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginTop: 2 },
   statusBox: { alignItems: 'center', marginTop: space.sm, minHeight: 74 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   dot: { width: 10, height: 10, borderRadius: 5 },

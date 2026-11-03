@@ -43,6 +43,10 @@ declare class ZeppelinVpnNativeModule extends NativeModule<ZeppelinVpnEvents> {
   readClipboard(): Promise<string | null>;
   writeClipboard(text: string): Promise<void>;
   openVpnSettings(): boolean;
+  notificationsAllowed(): boolean;
+  /** Shows Android's notification permission dialog; false when no dialog can be shown. */
+  requestNotificationPermission(): boolean;
+  openNotificationSettings(): boolean;
   generateKeyPair(): { privateKey: string; publicKey: string };
   deviceLanguage(): string;
   appVersion(): string;

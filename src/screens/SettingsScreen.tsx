@@ -52,6 +52,28 @@ export function SettingsScreen() {
         />
       </Card>
 
+      <SectionLabel>{t('settings.notifications')}</SectionLabel>
+      <Card>
+        <ToggleRow
+          label={t('settings.statusNotification')}
+          description={t('settings.statusNotification.desc')}
+          value={settings.statusNotification}
+          onChange={(statusNotification) => updateSettings({ statusNotification })}
+        />
+        {app.nativeAvailable && settings.statusNotification && !app.notificationsAllowed ? (
+          <>
+            <Text style={styles.warn}>{t('settings.notificationsOff')}</Text>
+            <Button
+              label={t('settings.notificationsAllow')}
+              small
+              variant="primary"
+              onPress={app.requestNotifications}
+              style={styles.inlineButton}
+            />
+          </>
+        ) : null}
+      </Card>
+
       <SectionLabel>{t('settings.protection')}</SectionLabel>
       <Card>
         <ToggleRow
@@ -173,6 +195,9 @@ export function SettingsScreen() {
         <Text style={styles.label}>
           {t('settings.version')}: {app.appVersion || '—'}
         </Text>
+        <Text style={styles.label}>
+          {t('settings.developer')}: <Text style={styles.brand}>LenstedReal</Text>
+        </Text>
         <Text style={styles.help}>{t('settings.license')}</Text>
       </Card>
 
@@ -203,6 +228,8 @@ const styles = StyleSheet.create({
   note: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: space.md },
   steps: { color: colors.text, fontSize: 13, lineHeight: 19, marginTop: space.sm },
   error: { color: colors.red, fontSize: 13, lineHeight: 18 },
+  warn: { color: colors.amber, fontSize: 13, lineHeight: 18, marginTop: space.md },
+  brand: { color: colors.crimson, fontWeight: '800' },
   inlineButton: { alignSelf: 'flex-start', marginTop: space.md },
   customDns: { marginTop: space.md },
   modal: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },

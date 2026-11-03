@@ -68,6 +68,10 @@ interface AppStateValue {
   errorMessage: (code: string | null, detail?: string | null) => string;
   resetAll: () => Promise<void>;
   appVersion: string;
+  /** Android allows this app's notifications (permission granted and not blocked). */
+  notificationsAllowed: boolean;
+  /** Asks for the notification permission, or opens the notification settings when Android will not ask. */
+  requestNotifications: () => void;
 }
 
 const Ctx = createContext<AppStateValue | null>(null);
@@ -137,6 +141,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const [disclosureOpen, setDisclosureOpen] = useState(false);
   const [appActive, setAppActive] = useState(true);
+  const [notificationsAllowed, setNotificationsAllowed] = useState(() => {
+    try {
+      return native?.notificationsAllowed() ?? false;
+    } catch {
+      return false;
+    }
+  });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSample = useRef<{ rx: number; tx: number; at: number } | null>(null);
   const autoConnectDone = useRef(false);
@@ -203,6 +214,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (isActive && native) {
         prevSample.current = null;
         setStatus(normalizeStatus(native.getStatus()));
+        // The permission dialog and the settings page both return here.
+        try {
+          setNotificationsAllowed(native.notificationsAllowed());
+        } catch {
+          // keep the last value
+        }
       }
     });
     return () => {
@@ -462,6 +479,38 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [ready, settings.connectOnLaunch, settings.vpnDisclosureAccepted, native, status.tunnelUp, vault.selectedId, connect]);
 
+  // ---- notification permission: asked once at the first start (Android 13+ shows a dialog)
+  const requestNotifications = useCallback(() => {
+    if (!native) return;
+    try {
+      if (native.notificationsAllowed()) {
+        setNotificationsAllowed(true);
+        return;
+      }
+      if (!native.requestNotificationPermission()) native.openNotificationSettings();
+    } catch {
+      // nothing else to try
+    }
+  }, [native]);
+
+  useEffect(() => {
+    if (!ready || !native || settings.notificationAsked) return;
+    if (notificationsAllowed) {
+      updateSettings({ notificationAsked: true });
+      return;
+    }
+    // Let the first screen render before Android's dialog appears.
+    const timer = setTimeout(() => {
+      updateSettings({ notificationAsked: true });
+      try {
+        native.requestNotificationPermission();
+      } catch {
+        // the Settings screen offers it again
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [ready, native, settings.notificationAsked, notificationsAllowed, updateSettings]);
+
   const resetAll = useCallback(async () => {
     if (native) {
       try {
@@ -521,6 +570,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     errorMessage,
     resetAll,
     appVersion,
+    notificationsAllowed,
+    requestNotifications,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

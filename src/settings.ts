@@ -26,6 +26,10 @@ export interface Settings {
   alwaysOnTipDismissed: boolean;
   /** The user accepted the in-app VPN disclosure (Google Play VpnService policy). */
   vpnDisclosureAccepted: boolean;
+  /** Live status notification while the VPN is on (read by the native side too). */
+  statusNotification: boolean;
+  /** The notification permission was asked once at the first start. */
+  notificationAsked: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -41,6 +45,8 @@ export const DEFAULT_SETTINGS: Settings = {
   exitCheck: true,
   alwaysOnTipDismissed: false,
   vpnDisclosureAccepted: false,
+  statusNotification: true,
+  notificationAsked: false,
 };
 
 /** IPv4 resolvers only: profiles from our server script are IPv4-only tunnels. */
@@ -77,6 +83,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     exitCheck: bool(r.exitCheck, d.exitCheck),
     alwaysOnTipDismissed: bool(r.alwaysOnTipDismissed, d.alwaysOnTipDismissed),
     vpnDisclosureAccepted: bool(r.vpnDisclosureAccepted, d.vpnDisclosureAccepted),
+    statusNotification: bool(r.statusNotification, d.statusNotification),
+    notificationAsked: bool(r.notificationAsked, d.notificationAsked),
   };
 }
 

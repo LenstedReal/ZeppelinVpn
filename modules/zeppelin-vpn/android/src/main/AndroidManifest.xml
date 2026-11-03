@@ -5,6 +5,8 @@
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <!-- Only used when the user enables "Connect when the phone starts". -->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <!-- Live status notification (asked at runtime on Android 13+). -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
   <application>
     <!--
@@ -20,6 +22,9 @@
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
       </intent-filter>
     </receiver>
+    <receiver
+      android:name="expo.modules.zeppelinvpn.NotificationActionReceiver"
+      android:exported="false" />
   </application>
 
 </manifest>

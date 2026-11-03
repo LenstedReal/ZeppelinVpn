@@ -124,6 +124,7 @@ test('the bot checks a live server, refuses wrong keys and adds approved servers
     const line = (k: string) =>
       `{"id":"127-0-0-1","name":"Test City","country":"NL","apiUrl":"http://127.0.0.1:${port}","serverPublicKey":"${k}"}`;
     const before = readFileSync(join(dir, 'servers.json'), 'utf8');
+    const countBefore = (JSON.parse(before) as { servers: unknown[] }).servers.length;
 
     let out = await runBot(dir, { EVENT_ACTION: 'opened', ISSUE_AUTHOR: 'ahmet', ISSUE_BODY: line(serverKey) });
     assert.match(out, /Kontrol tamam/);
@@ -143,7 +144,7 @@ test('the bot checks a live server, refuses wrong keys and adds approved servers
     assert.match(out, /Eklendi/);
     // read the raw file: the app itself would skip this 127.0.0.1 test entry
     const raw = JSON.parse(readFileSync(join(dir, 'servers.json'), 'utf8')) as { servers: ServerEntry[] };
-    assert.equal(raw.servers.length, 2);
+    assert.equal(raw.servers.length, countBefore + 1, 'exactly one server is added, whatever the list held before');
     const added = raw.servers.find((s) => s.name === 'Test City');
     assert.equal(added?.operator, 'ahmet', 'operator is the issue author');
     assert.equal(added?.serverPublicKey, serverKey);

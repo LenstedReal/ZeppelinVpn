@@ -4,7 +4,7 @@ Son güncelleme / Last updated: 2026-11-03
 
 Geliştirici / Developer: LenstedReal
 
-İletişim / Contact: **[buraya iletişim e-postanı yaz / your contact e-mail]**
+İletişim / Contact: [contact.zeppelinvpn@proton.me](mailto:contact.zeppelinvpn@proton.me)
 
 ---
 
@@ -52,6 +52,9 @@ Zeppelin VPN, LenstedReal tarafından geliştirilen açık kaynaklı (GNU GPL v3
 
 Uygulama 18 yaş altına yönelik değildir. Bu politika değişirse bu metin güncellenir.
 
+**İletişim**
+- Soru, istek ve şikâyetler için: [contact.zeppelinvpn@proton.me](mailto:contact.zeppelinvpn@proton.me)
+
 ## English
 
 Zeppelin VPN is an open-source (GNU GPL v3) WireGuard VPN app developed by LenstedReal. You can use it in three ways: connect to ready servers run by LenstedReal, connect to community servers LenstedReal approved, or add the profile of a server you set up yourself.
@@ -95,3 +98,6 @@ Zeppelin VPN is an open-source (GNU GPL v3) WireGuard VPN app developed by Lenst
 - Settings → Delete all data, or uninstall the app. Your record on a ready server is deleted automatically after 14 days without use.
 
 The app is not directed at children under 18. If this policy changes, this text will be updated.
+
+**Contact**
+- Questions, requests and complaints: [contact.zeppelinvpn@proton.me](mailto:contact.zeppelinvpn@proton.me)

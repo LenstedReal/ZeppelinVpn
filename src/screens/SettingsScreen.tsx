@@ -204,6 +204,9 @@ export function SettingsScreen() {
         <Text style={styles.label}>
           {t('settings.developer')}: <Text style={styles.brand}>LenstedReal</Text>
         </Text>
+        <Text style={styles.label} selectable>
+          {t('settings.contact')}: contact.zeppelinvpn@proton.me
+        </Text>
         <Text style={styles.help}>{t('settings.license')}</Text>
       </Card>
 

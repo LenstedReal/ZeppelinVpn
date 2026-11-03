@@ -60,6 +60,10 @@ Sunucu betiğini değiştirirsen uygulamadaki kopyayı yenile: `npm run embed-se
 - [docs/DEGISIKLIKLER_TR.md](docs/DEGISIKLIKLER_TR.md): eski Kotlin sürümüne göre farklar
 - [docs/TEST_RAPORU_TR.md](docs/TEST_RAPORU_TR.md): neyin test edildiği, neyin edilmediği
 
+## İletişim
+
+Soru, istek ve şikâyetler için: [contact.zeppelinvpn@proton.me](mailto:contact.zeppelinvpn@proton.me). Hata bildirimi ve sunucu önerileri için GitHub Issues da kullanılabilir.
+
 ## Lisans
 
 Zeppelin VPN açık kaynaktır: **GNU GPL v3 veya sonrası** ([LICENSE](LICENSE)). Copyright (C) 2026 LenstedReal.

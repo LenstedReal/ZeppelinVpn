@@ -37,7 +37,10 @@ Diğer
 Verilerini silmek
 • Ayarlar → Tüm verileri sil ya da uygulamayı kaldır. Hazır sunucudaki kaydın 14 gün kullanılmayınca kendiliğinden silinir.
 
-Uygulama 18 yaş altına yönelik değildir. Bu politika değişirse bu metin güncellenir.`,
+Uygulama 18 yaş altına yönelik değildir. Bu politika değişirse bu metin güncellenir.
+
+İletişim
+• Soru, istek ve şikâyetler için: contact.zeppelinvpn@proton.me`,
   en: `Zeppelin VPN is an open-source (GNU GPL v3) WireGuard VPN app developed by LenstedReal. You can use it in three ways: connect to ready servers run by LenstedReal, connect to community servers LenstedReal approved, or add the profile of a server you set up yourself.
 
 LenstedReal’s ready servers (e.g. Frankfurt, Oracle Cloud Germany)
@@ -75,5 +78,8 @@ Permissions
 Deleting your data
 • Settings → Delete all data, or uninstall the app. Your record on a ready server is deleted automatically after 14 days without use.
 
-The app is not directed at children under 18. If this policy changes, this text will be updated.`,
+The app is not directed at children under 18. If this policy changes, this text will be updated.
+
+Contact
+• Questions, requests and complaints: contact.zeppelinvpn@proton.me`,
 };

@@ -40,3 +40,10 @@ Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Yeni sürüm eski Ko
 - **by LenstedReal:** ana ekranda ve Ayarlar → Hakkında'da geliştirici adı.
 - **Hazır sunucu:** Frankfurt (Oracle Cloud). Kendi sunucunu kurma rehberi ve kendi profillerin aynen duruyor.
 - **Gizlilik:** politika artık hazır sunucuları da doğru anlatıyor. Hazır sunucuda kayıt tarihleri yalnızca gün olarak tutulur (saat yok); `public-on` sistem günlüklerini yalnızca belleğe alır (en fazla 1 gün), rsyslog'u kapatır ve eski syslog/auth.log kayıtlarını siler.
+
+## 2.2.0
+
+- **Arayüz metinleri yeniden yazıldı:** "Korunmuyorsun / Trafiğin VPN ile şifrelenmiyor", "Korunuyorsun / Şifreli tünel kuruldu", "Kayıt tutmayız", "Verini satmayız" gibi kısa ve net ifadeler. Teknik bilgiler (el sıkışma, MTU, keepalive, kill switch) duruyor.
+- **Sekmeler:** Bağlantı, Sunucular, Kurulum, Ayarlar.
+- **Açık kaynak lisansı:** GNU GPL v3 veya sonrası (LICENSE).
+- **Releases:** main'e her push'ta yalnızca en son imzalı APK yayınlanır, eski sürümler silinir.

@@ -132,11 +132,11 @@ Kill switch, tüneli açık tutarak çalışır: Android tünel açıkken tüm t
 
 ```mermaid
 flowchart LR
-  P["git push (expo dalı)"] --> I["npm install<br/>expo install --fix"]
+  P["git push (main)"] --> I["npm install<br/>expo install --fix"]
   I --> Te["npm test<br/>ShellCheck"]
   Te --> Pr["npx expo prebuild<br/>(android/ üretilir)"]
   Pr --> G["Gradle: imzalı APK + AAB<br/>(keystore GitHub Secrets'tan)"]
-  G --> Ar["Artifacts<br/>v* etiketinde GitHub Release"]
+  G --> Ar["Artifacts (14 gün)<br/>main'de: tek GitHub Release<br/>(eski sürümler silinir)"]
 ```
 
 Sürümler: Expo SDK 58, React Native 0.88, React 19, TypeScript. Android minimum 8.0 (API 26). ARM mimarileri: `armeabi-v7a`, `arm64-v8a`. JDK 17.

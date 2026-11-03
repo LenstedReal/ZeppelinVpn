@@ -2,13 +2,12 @@ name: Android APK + AAB
 
 on:
   push:
-    branches: [expo, main]
-    tags: ['v*']
+    branches: [main, expo]
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write # only used to attach the APK to a GitHub Release when a v* tag is pushed
+  contents: write # only used to publish the APK as the repository's single release (pushes to main)
 
 concurrency:
   group: android-${{ github.ref }}
@@ -111,6 +110,7 @@ jobs:
           name: ZeppelinVPN-apk
           path: out/*.apk
           if-no-files-found: error
+          retention-days: 14
 
       - name: Upload AAB (Google Play)
         uses: actions/upload-artifact@v4
@@ -118,9 +118,27 @@ jobs:
           name: ZeppelinVPN-aab
           path: out/*.aab
           if-no-files-found: error
+          retention-days: 14
 
-      - name: Attach APK to the GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: out/*.apk
+      # The Releases page always shows exactly one version: the newest signed APK from main.
+      # Every older release (including old debug builds) is deleted together with its tag.
+      - name: Publish the APK as the only release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_KEYSTORE" != "true" ]; then
+            echo "::warning::Signing secrets are missing, so this APK is not signed with your key. No release was published."
+            exit 0
+          fi
+          VERSION=$(node -p "require('./app.json').expo.version")
+          gh release list -R "$GITHUB_REPOSITORY" --limit 200 --json tagName --jq '.[].tagName' | while read -r tag; do
+            echo "Deleting old release $tag"
+            gh release delete "$tag" -R "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          done
+          gh release create "v$VERSION" out/*.apk -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest \
+            --title "Zeppelin VPN $VERSION" \
+            --notes "Telefona kurmak için aşağıdaki .apk dosyasını indir. Değişiklikler: docs/DEGISIKLIKLER_TR.md
+
+          Download the .apk below to install on your phone." 

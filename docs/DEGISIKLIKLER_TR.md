@@ -1,6 +1,6 @@
 # Zeppelin VPN 2.0: eski Kotlin sürümüne (1.3) göre değişiklikler
 
-Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Eski Kotlin kodu `main` dalında olduğu gibi duruyor; yeni sürüm `expo` dalında.
+Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Yeni sürüm eski Kotlin kodunun yerini aldı ve `main` dalında.
 
 ## Kaldırılanlar (yanlış ya da tehlikeliydi)
 

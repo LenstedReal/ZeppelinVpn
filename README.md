@@ -33,7 +33,7 @@ docs/                        kurulum, Oracle, Play Store, gizlilik, değişiklik
 
 ## Derleme
 
-Derleme GitHub Actions'ta yapılır: `expo` dalına her push'ta imzalı APK ve AAB üretilir. Adım adım anlatım: [docs/KURULUM_TR.md](docs/KURULUM_TR.md).
+Derleme GitHub Actions'ta yapılır: `main` dalına her push'ta imzalı APK ve AAB üretilir ve en son APK, GitHub **Releases** sayfasında tek sürüm olarak yayınlanır (eski sürümler silinir). Adım adım anlatım: [docs/KURULUM_TR.md](docs/KURULUM_TR.md).
 
 Yerelde (Android SDK + JDK 17 olan bir bilgisayarda):
 

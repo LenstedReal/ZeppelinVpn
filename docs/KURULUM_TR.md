@@ -1,12 +1,12 @@
-# Zeppelin VPN 2.0: GitHub'a gönderme, derleme ve telefona kurma
+# Zeppelin VPN: GitHub'a gönderme, derleme ve telefona kurma
 
-Bu rehber her şeyi telefondan, Termux ile yaptırır. Mevcut `main` dalına ve eski Kotlin koduna dokunulmaz: yeni sürüm ayrı bir `expo` dalına gider.
+Bu rehber her şeyi telefondan, Termux ile yaptırır. Uygulamanın kodu GitHub'da `main` dalındadır. Güncellemeler sohbette bir `.bundle` dosyası olarak gelir; Termux'ta yerel `expo` dalına alınır ve `main`'e gönderilir. Komutları tek tek çalıştır.
 
 Gerekenler: Termux (git kurulu, GitHub'a push yapabildiğin hesap), Derby Arena için oluşturduğun upload keystore dosyası.
 
 ## 1. Dosyaları indir
 
-Sohbetteki **ZeppelinVPN-expo-2.0.0.bundle** dosyasını telefonun İndirilenler klasörüne kaydet. (ZIP dosyası sadece içeriğe göz atmak için; gönderme işinde bundle kullanılır, çünkü commit geçmişi onun içinde.)
+Sohbetteki **ZeppelinVPN-expo-X.Y.Z.bundle** dosyasını telefonun İndirilenler klasörüne kaydet. Commit geçmişi bu dosyanın içindedir. Aynı adla ikinci kez inerse telefon adın sonuna `(1)` ekler; aşağıdaki komut en yenisini kendisi bulur.
 
 ## 2. Depoyu hazırla ve yeni dalı al
 
@@ -15,15 +15,8 @@ termux-setup-storage            # ~/storage yoksa bir kez; izin ver
 cd ~
 [ -d ZeppelinVpn ] || git clone https://github.com/LenstedReal/ZeppelinVpn.git
 cd ZeppelinVpn
-git fetch ~/storage/downloads/ZeppelinVPN-expo-2.0.0.bundle expo:expo
-git log --oneline -10 expo      # 9 commit görmelisin
-```
-
-İsteğe bağlı güvence (eski Kotlin sürümüne etiket koyar, hiçbir şeyi silmez):
-
-```bash
-git tag kotlin-1.3 origin/main
-git push origin kotlin-1.3
+git fetch "$(ls -t ~/storage/downloads/ZeppelinVPN-expo-*.bundle | head -1)" expo:expo
+git log --oneline -5 expo
 ```
 
 ## 3. İmza sırlarını ekle (bir kez, push'tan önce)
@@ -64,7 +57,7 @@ Keystore dosyasını ve şifrelerini asla depoya ekleme. `.gitignore` `*.keystor
 
 ```bash
 cd ~/ZeppelinVpn
-git push -u origin expo
+git push origin expo:main
 ```
 
 Sırları eklemeden push'larsan da derleme çalışır, ama APK hata ayıklama (debug) anahtarıyla imzalanır ve AAB Play'e yüklenemez. Sırları sonradan eklersen derlemeyi yeniden başlatmak için:
@@ -75,7 +68,7 @@ git commit --allow-empty -m "Derlemeyi yeniden başlat" && git push
 
 ## 5. Derlemeyi izle ve indir
 
-İlk derleme yaklaşık 15–30 dakika sürer. GitHub → **Actions → Android APK + AAB** → `expo` dalındaki çalışma. Bitince çalışmanın sayfasında **Artifacts** altında iki dosya olur:
+İlk derleme yaklaşık 15–30 dakika sürer. GitHub → **Actions → Android APK + AAB** → `main` dalındaki son çalışma. Bitince çalışmanın sayfasında **Artifacts** altında iki dosya olur:
 
 - `ZeppelinVPN-apk`: telefona kurulacak APK
 - `ZeppelinVPN-aab`: Google Play'e yüklenecek paket
@@ -96,19 +89,12 @@ gh run download -R LenstedReal/ZeppelinVpn -n ZeppelinVPN-apk -D ~/storage/downl
 3. Uygulamayı aç → **Sunucu** sekmesindeki adımlarla Oracle sunucunu kur (ya da [ORACLE_TR.md](ORACLE_TR.md)).
 4. Betiğin verdiği profili **Profiller → Panodan yapıştır** ile ekle ve bağlan.
 
-## 7. Sürüm yayınlamak (isteğe bağlı)
+## 7. Sürüm yayınlamak
 
-```bash
-git tag v2.0.0
-git push origin v2.0.0
-```
+Ayrı bir şey yapmana gerek yok. `main` dalına her push'ta, imzalama anahtarı ayarlıysa, iş akışı imzalı APK'yı GitHub **Releases** sayfasına koyar. Eski sürümleri (eski debug derlemeleri dahil) etiketleriyle birlikte siler, yani Releases'ta her zaman yalnızca en son sürüm durur. Bağlantıyı sitende paylaşabilirsin. Her yeni sürümde `app.json` içinde `version` ve `android.versionCode` değerlerini artır.
 
-İş akışı APK'yı otomatik olarak GitHub Releases sayfasına ekler; bağlantıyı paylaşabilirsin. Her yeni sürümde `app.json` içinde `version` ve `android.versionCode` değerlerini artır.
+Actions sayfasındaki indirmeler (Artifacts) 14 gün sonra kendiliğinden silinir.
 
 ## Derleme hata verirse
 
 Kırmızı adımı aç, son 40–50 satırı kopyalayıp bana gönder. Bu ortamda Android derlemesini çalıştıramadım; ilk derlemede sürüm uyumsuzluğu gibi bir sorun çıkarsa hızlıca düzeltirim. Testler (`npm test`) ve ShellCheck adımları derlemeden önce çalışır; onlar geçiyorsa sorun Gradle tarafındadır.
-
-## İleride `expo` dalını ana dal yapmak
-
-Her şey yolundaysa GitHub → **Settings → General → Default branch → expo**. `main` dalı eski Kotlin sürümü olarak kalır, hiçbir şey silinmez.

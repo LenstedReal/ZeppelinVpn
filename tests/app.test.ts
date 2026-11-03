@@ -21,7 +21,7 @@ test('Turkish and English have the same keys and placeholders', () => {
     const ph = (s: string) => (s.match(/\{[a-z]+\}/g) ?? []).sort().join(',');
     assert.equal(ph(en[key as keyof typeof en]), ph(tr[key as keyof typeof tr]), `placeholders differ in ${key}`);
   }
-  assert.equal(translate('en', 'state.reconnecting.retry', { n: 3 }), 'Attempt 3 will run in a few seconds.');
+  assert.equal(translate('en', 'state.reconnecting.retry', { n: 3 }), 'Attempt 3 in a moment.');
 });
 
 test('every parser issue code has a translation', () => {

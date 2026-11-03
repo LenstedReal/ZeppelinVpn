@@ -23,7 +23,7 @@
 #   * The server's public IP is NAT'ed by Oracle and is not visible on the interface, so it is
 #     looked up once and stored.
 # The Oracle "Security List" (cloud firewall) cannot be changed from inside the server: add an
-# ingress rule for UDP 51820 in the Oracle console yourself (the app's Server tab shows how).
+# ingress rule for UDP 51820 in the Oracle console yourself (the app's Setup tab shows how).
 
 set -euo pipefail
 
@@ -291,7 +291,7 @@ print_profile() {
   say ""
   say "${C_B}Zeppelin VPN profili: $name${C_0}"
   say "Telefonda: Termux'ta aşağıdaki BEGIN ile END arasındaki metni (bu iki satır hariç) seçip kopyala,"
-  say "sonra Zeppelin VPN -> Profiller -> 'Panodan yapıştır'."
+  say "sonra Zeppelin VPN -> Sunucular -> 'Panodan yapıştır'."
   say ""
   say "----- ZEPPELIN PROFILE BEGIN -----"
   cat "$conf"

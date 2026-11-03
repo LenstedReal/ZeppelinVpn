@@ -86,8 +86,8 @@ gh run download -R LenstedReal/ZeppelinVpn -n ZeppelinVPN-apk -D ~/storage/downl
 
 1. **Eski Zeppelin VPN'i kaldır.** Eski APK farklı bir anahtarla imzalandığı için yeni sürüm üstüne kurulamaz ("Uygulama yüklenmedi"). Eski sürümdeki sahte sunucular zaten çalışmıyordu.
 2. İndirdiğin APK'yı aç ve kur. Play Protect "bilinmeyen geliştirici" uyarısı verirse **Yine de yükle** de.
-3. Uygulamayı aç → **Sunucu** sekmesindeki adımlarla Oracle sunucunu kur (ya da [ORACLE_TR.md](ORACLE_TR.md)).
-4. Betiğin verdiği profili **Profiller → Panodan yapıştır** ile ekle ve bağlan.
+3. Uygulamayı aç → **Kurulum** sekmesindeki adımlarla Oracle sunucunu kur (ya da [ORACLE_TR.md](ORACLE_TR.md)).
+4. Betiğin verdiği profili **Sunucular → Panodan yapıştır** ile ekle ve bağlan.
 
 ## 7. Sürüm yayınlamak
 

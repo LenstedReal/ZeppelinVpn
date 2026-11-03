@@ -95,20 +95,20 @@ object StatusNotifier {
     val text: String
     when (state) {
       "connected" -> {
-        title = if (tr) "Bağlı" else "Connected"
+        title = if (tr) "Korunuyorsun" else "Protected"
         text = "↓ ${rate(down, tr)}   ↑ ${rate(up, tr)}"
       }
       "connecting" -> {
         title = if (tr) "Bağlanıyor…" else "Connecting…"
-        text = if (tr) "Sunucudan yanıt bekleniyor" else "Waiting for the server"
+        text = if (tr) "Şifreli tünel kuruluyor" else "Setting up the encrypted tunnel"
       }
       "no_network" -> {
-        title = if (tr) "Ağ yok" else "No network"
-        text = if (tr) "İnternet gelince kendiliğinden devam eder" else "Resumes by itself when the internet is back"
+        title = if (tr) "İnternet yok" else "No internet"
+        text = if (tr) "Bağlantı gelince otomatik devam eder" else "Resumes automatically when you are back online"
       }
       else -> {
         title = if (tr) "Yeniden bağlanıyor" else "Reconnecting"
-        text = if (tr) "Sunucuya ulaşılamıyor; trafik güvenlik için durduruldu" else "Server unreachable; traffic is held back for safety"
+        text = if (tr) "Veri sızmasın diye internet durduruldu" else "Internet is paused so nothing leaks"
       }
     }
     val fullTitle = if (name.isNotEmpty()) "$title · $name" else title

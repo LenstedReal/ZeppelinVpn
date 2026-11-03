@@ -71,8 +71,8 @@ export const STEPS: GuideStep[] = [
   {
     title: { tr: 'Profili uygulamaya ekle', en: 'Add the profile to the app' },
     body: {
-      tr: 'Termux’ta ekrana uzun bas → “Select” → “# Name:” satırından “PersistentKeepalive = 25” satırına kadar seç → Copy. Sonra Profiller → “Panodan yapıştır” → Kaydet. Metni tekrar görmek için sunucuda:',
-      en: 'In Termux long-press → “Select” → select from the “# Name:” line to “PersistentKeepalive = 25” → Copy. Then Profiles → “Paste from clipboard” → Save. To see the text again, run on the server:',
+      tr: 'Termux’ta ekrana uzun bas → “Select” → “# Name:” satırından “PersistentKeepalive = 25” satırına kadar seç → Copy. Sonra Sunucular → “Panodan yapıştır” → Kaydet. Metni tekrar görmek için sunucuda:',
+      en: 'In Termux long-press → “Select” → select from the “# Name:” line to “PersistentKeepalive = 25” → Copy. Then Servers → “Paste from clipboard” → Save. To see the text again, run on the server:',
     },
     commands: ['sudo bash zeppelin-oracle-setup.sh show telefon'],
   },

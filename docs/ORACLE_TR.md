@@ -1,6 +1,6 @@
 # Oracle Cloud'da ücretsiz WireGuard sunucusu (adım adım)
 
-Toplam süre yaklaşık 20 dakika. Hepsi telefondan yapılabilir: Oracle web konsolu (tarayıcı) ve Termux. Aynı adımlar uygulamanın **Sunucu** sekmesinde de var; oradaki "Kurulum komutunu kopyala" düğmesi aşağıdaki 7. adımı tek dokunuşa indirir.
+Toplam süre yaklaşık 20 dakika. Hepsi telefondan yapılabilir: Oracle web konsolu (tarayıcı) ve Termux. Aynı adımlar uygulamanın **Kurulum** sekmesinde de var; oradaki "Kurulum komutunu kopyala" düğmesi aşağıdaki 7. adımı tek dokunuşa indirir.
 
 ## 1. Oracle hesabı
 
@@ -88,7 +88,7 @@ PersistentKeepalive = 25
 ----- ZEPPELIN PROFILE END -----
 ```
 
-Termux'ta ekrana uzun bas → **Select** → `# Name:` satırından `PersistentKeepalive = 25` satırına kadar seç → **Copy**. Uygulamada **Profiller → Panodan yapıştır → Kaydet**. Metni tekrar görmek için sunucuda: `sudo bash zeppelin-oracle-setup.sh show telefon`.
+Termux'ta ekrana uzun bas → **Select** → `# Name:` satırından `PersistentKeepalive = 25` satırına kadar seç → **Copy**. Uygulamada **Sunucular → Panodan yapıştır → Kaydet**. Metni tekrar görmek için sunucuda: `sudo bash zeppelin-oracle-setup.sh show telefon`.
 
 ## 9. Bağlan ve doğrula
 

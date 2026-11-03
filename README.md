@@ -1,8 +1,8 @@
-# Zeppelin VPN 2.0 (Expo)
+# Zeppelin VPN 2.1 (Expo) — by LenstedReal
 
-**Kendi sunucun. Kendi tünelin.** Zeppelin VPN, kendi WireGuard sunucuna (örneğin ücretsiz Oracle Cloud sunucuna) bağlanan bir Android VPN istemcisidir. Uygulama hiçbir VPN sunucusu sağlamaz, hesap istemez, reklam veya izleme kütüphanesi içermez.
+**Hazır sunucu ya da kendi sunucun.** Zeppelin VPN, LenstedReal'in geliştirdiği bir Android WireGuard VPN uygulamasıdır. İki yolla kullanılır: LenstedReal'in işlettiği hazır sunuculara tek dokunuşla bağlanırsın (şu an: Frankfurt) ya da kendi WireGuard sunucunu (örneğin ücretsiz Oracle Cloud sunucusu) kurup profilini eklersin. Hesap istemez, reklam veya izleme kütüphanesi içermez, trafik kaydı tutmaz.
 
-> English summary: Android VPN client for your own WireGuard server. Expo (React Native + TypeScript) UI, a small Kotlin module that wraps the official WireGuard tunnel library, a one-command Oracle Cloud server script, and a GitHub Actions build that produces a signed APK and AAB.
+> English summary: Android WireGuard VPN app by LenstedReal. Connect to ready servers run by the developer or to your own server. Expo (React Native + TypeScript) UI, a Kotlin module that wraps the official WireGuard tunnel library, a live status notification, a one-command Oracle Cloud server script with an optional shared-server registration API, and a GitHub Actions build that produces a signed APK and AAB. Architecture: [docs/MIMARI_TR.md](docs/MIMARI_TR.md).
 
 ## Neler var
 
@@ -13,6 +13,8 @@
 | Akıllı otomatik bağlanma | Android “Her zaman açık VPN” desteği, uygulama açılınca / telefon açılınca bağlanma, ağ gelince ve başlatma hatasında yeniden deneme, güncellemeden sonra bağlantıyı geri kurma |
 | Güvenlik | Profiller Android Keystore anahtarıyla AES-256-GCM şifreli; yedekleme kapalı; düz metin yedeği yok |
 | Oracle sunucu | `server/zeppelin-oracle-setup.sh`: Oracle'ın REJECT kurallarını aşan güvenlik duvarı, MTU, NAT, profil üretimi, durum ve onarım komutları. Uygulama bu betiği tek satırlık komut olarak kopyalar. |
+| Hazır sunucular | Telefon kendi anahtarını üretir, sunucuya yalnızca açık anahtar gider; sunucu anahtarı uygulamaya sabitlenmiştir. Kayıtlar yalnızca gün olarak tutulur, 14 gün kullanılmayınca silinir. |
+| Canlı bildirim | Bağlantı durumu, anlık hız, bağlı kalınan süre ve "Bağlantıyı kes" düğmesi; kilit ekranında ayrıntı yok |
 | Dil | Türkçe ve İngilizce (otomatik ya da elle) |
 
 ## Klasörler
@@ -20,7 +22,7 @@
 ```
 App.tsx, index.ts            uygulama girişi ve sekmeler
 src/                         ekranlar, durum, ayrıştırıcı, ayarlar, çeviriler
-modules/zeppelin-vpn/        yerel Expo modülü (Kotlin): tünel, sağlık izleme, kasa, açılış alıcısı
+modules/zeppelin-vpn/        yerel Expo modülü (Kotlin): tünel, sağlık izleme, kasa, bildirim, açılış alıcısı
 plugins/                     Expo config plugin (minSdk 26, ARM derlemeleri, Gradle belleği)
 server/                      Oracle/Ubuntu WireGuard kurulum betiği
 tests/                       Node testleri + betiğin sahte komutlarla uçtan uca denemesi
@@ -46,6 +48,7 @@ Sunucu betiğini değiştirirsen uygulamadaki kopyayı yenile: `npm run embed-se
 
 ## Belgeler
 
+- [docs/MIMARI_TR.md](docs/MIMARI_TR.md): mimari, dosyalar, bağlanma akışı, hazır sunucu tasarımı, derleme hattı
 - [docs/KURULUM_TR.md](docs/KURULUM_TR.md): Termux, GitHub, imzalama, APK kurulumu
 - [docs/ORACLE_TR.md](docs/ORACLE_TR.md): ücretsiz Oracle sunucusu, adım adım
 - [docs/PLAY_STORE_TR.md](docs/PLAY_STORE_TR.md): Play şartları (Kuruluş hesabı), mağaza metinleri, VPN beyanı

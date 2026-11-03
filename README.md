@@ -1,6 +1,6 @@
 # Zeppelin VPN 2.1 (Expo) — by LenstedReal
 
-**Hazır sunucu ya da kendi sunucun.** Zeppelin VPN, LenstedReal'in geliştirdiği bir Android WireGuard VPN uygulamasıdır. İki yolla kullanılır: LenstedReal'in işlettiği hazır sunuculara tek dokunuşla bağlanırsın (şu an: Frankfurt) ya da kendi WireGuard sunucunu (örneğin ücretsiz Oracle Cloud sunucusu) kurup profilini eklersin. Hesap istemez, reklam veya izleme kütüphanesi içermez, trafik kaydı tutmaz.
+**Hızlı. Şifreli. Kayıt tutmaz.** Zeppelin VPN, LenstedReal'in geliştirdiği açık kaynaklı bir Android WireGuard VPN uygulamasıdır. Üç yolla kullanılır: LenstedReal'in işlettiği hazır sunuculara tek dokunuşla bağlanırsın (şu an: Frankfurt), LenstedReal'in onayladığı **topluluk sunucularını** kullanırsın ya da kendi WireGuard sunucunu (örneğin ücretsiz Oracle Cloud sunucusu) kurup profilini eklersin. Hesap istemez, reklam veya izleme kütüphanesi içermez, trafik kaydı tutmaz.
 
 > English summary: Android WireGuard VPN app by LenstedReal. Connect to ready servers run by the developer or to your own server. Expo (React Native + TypeScript) UI, a Kotlin module that wraps the official WireGuard tunnel library, a live status notification, a one-command Oracle Cloud server script with an optional shared-server registration API, and a GitHub Actions build that produces a signed APK and AAB. Architecture: [docs/MIMARI_TR.md](docs/MIMARI_TR.md).
 
@@ -14,6 +14,7 @@
 | Güvenlik | Profiller Android Keystore anahtarıyla AES-256-GCM şifreli; yedekleme kapalı; düz metin yedeği yok |
 | Oracle sunucu | `server/zeppelin-oracle-setup.sh`: Oracle'ın REJECT kurallarını aşan güvenlik duvarı, MTU, NAT, profil üretimi, durum ve onarım komutları. Uygulama bu betiği tek satırlık komut olarak kopyalar. |
 | Hazır sunucular | Telefon kendi anahtarını üretir, sunucuya yalnızca açık anahtar gider; sunucu anahtarı uygulamaya sabitlenmiştir. Kayıtlar yalnızca gün olarak tutulur, 14 gün kullanılmayınca silinir. |
+| Topluluk sunucuları | Herkes kendi sunucusunu önerebilir; bot kontrol eder, LenstedReal `onay` etiketiyle onaylar, sunucu yeni APK gerekmeden herkesin listesine girer. Bkz. [docs/TOPLULUK_TR.md](docs/TOPLULUK_TR.md) |
 | Canlı bildirim | Bağlantı durumu, anlık hız, bağlı kalınan süre ve "Bağlantıyı kes" düğmesi; kilit ekranında ayrıntı yok |
 | Dil | Türkçe ve İngilizce (otomatik ya da elle) |
 
@@ -25,6 +26,8 @@ src/                         ekranlar, durum, ayrıştırıcı, ayarlar, çeviri
 modules/zeppelin-vpn/        yerel Expo modülü (Kotlin): tünel, sağlık izleme, kasa, bildirim, açılış alıcısı
 plugins/                     Expo config plugin (minSdk 26, ARM derlemeleri, Gradle belleği)
 server/                      Oracle/Ubuntu WireGuard kurulum betiği
+servers.json                 GitHub'daki hazır sunucu listesi (uygulama açılışta indirir)
+scripts/                     sunucu betiğini gömme, topluluk sunucusu botu
 tests/                       Node testleri + betiğin sahte komutlarla uçtan uca denemesi
 store/                       Play ikonu ve tanıtım görselleri
 docs/                        kurulum, Oracle, Play Store, gizlilik, değişiklikler, test raporu
@@ -49,6 +52,7 @@ Sunucu betiğini değiştirirsen uygulamadaki kopyayı yenile: `npm run embed-se
 ## Belgeler
 
 - [docs/MIMARI_TR.md](docs/MIMARI_TR.md): mimari, dosyalar, bağlanma akışı, hazır sunucu tasarımı, derleme hattı
+- [docs/TOPLULUK_TR.md](docs/TOPLULUK_TR.md): topluluk sunucusu önerme, onaylama ve kaldırma
 - [docs/KURULUM_TR.md](docs/KURULUM_TR.md): Termux, GitHub, imzalama, APK kurulumu
 - [docs/ORACLE_TR.md](docs/ORACLE_TR.md): ücretsiz Oracle sunucusu, adım adım
 - [docs/PLAY_STORE_TR.md](docs/PLAY_STORE_TR.md): Play şartları (Kuruluş hesabı), mağaza metinleri, VPN beyanı

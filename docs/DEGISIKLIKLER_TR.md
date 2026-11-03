@@ -47,3 +47,13 @@ Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Yeni sürüm eski Ko
 - **Sekmeler:** Bağlantı, Sunucular, Kurulum, Ayarlar.
 - **Açık kaynak lisansı:** GNU GPL v3 veya sonrası (LICENSE).
 - **Releases:** main'e her push'ta yalnızca en son imzalı APK yayınlanır, eski sürümler silinir.
+
+## 2.3.0
+
+- **Topluluk sunucuları:** Sunucu listesi artık GitHub'daki `servers.json` dosyasından da okunuyor. Herkes kendi sunucusunu önerebiliyor: `public-on` komutu bir öneri bağlantısı yazıyor, bot sunucunun çalıştığını ve anahtarının eşleştiğini kontrol ediyor, LenstedReal `onay` etiketini ekleyince sunucu yeni APK gerekmeden herkesin listesine giriyor. Ayrıntılar: [TOPLULUK_TR.md](TOPLULUK_TR.md).
+- **Sunucular ekranı:** "LenstedReal sunucuları" ve "Topluluk sunucuları" bölümleri, her sunucuda "İşleten" bilgisi, listenin ne zaman güncellendiği ve "Listeyi yenile" butonu.
+- **Topluluk uyarısı:** Bir topluluk sunucusuna ilk bağlanmadan önce uygulama kimin işlettiğini söyler ve onay ister.
+- **Kurulum ekranı:** "Listeye öner" butonu.
+- **Gizlilik:** Ayarlar → Gizlilik → "Sunucu listesini güncelle" ile GitHub'dan liste indirme kapatılabilir. Gizlilik politikası topluluk sunucularını ve liste indirmeyi anlatıyor.
+- **Düzeltmeler:** Bildirimdeki hız artık uygulamadaki gibi Mbps (önceden MB/s gösteriyordu, 8 kat farklı görünüyordu). Uzun süreler gün olarak yazılıyor. Sunucuda IP başına saatlik yeni kayıt sınırı 10'dan 30'a çıktı (mobil operatörler çok kullanıcıyı tek IP arkasına koyuyor).
+- **Sunucu betiği:** `public-on` artık ülke kodu istiyor ve sunucu satırını JSON olarak, öneri bağlantısıyla birlikte yazıyor.

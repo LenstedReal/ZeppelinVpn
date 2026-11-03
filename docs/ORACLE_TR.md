@@ -94,20 +94,22 @@ Termux'ta ekrana uzun bas → **Select** → `# Name:` satırından `PersistentK
 
 **Bağlantı → BAĞLAN** → Android'in VPN iznini onayla. "Korunuyorsun" yazmalı, **Çıkış IP** Oracle sunucunun Public IP'si olmalı.
 
-## 10. Sunucunu uygulamada "hazır sunucu" yap (isteğe bağlı)
+## 10. Sunucunu herkesle paylaş (isteğe bağlı)
 
-Uygulamayı kuran herkesin profil uğraşmadan, listeden seçip tek dokunuşla bağlanması için:
-
-```bash
-sudo bash zeppelin-oracle-setup.sh public-on "Frankfurt" DE
-```
+Sunucun uygulamadaki listeye girerse herkes profil uğraşmadan, listeden seçip tek dokunuşla bağlanır.
 
 1. Oracle Security List'e **TCP 51821** giriş kuralı ekle (Source 0.0.0.0/0). Kayıt servisi bu portta çalışır.
-2. Komutun yazdığı `{ id: ..., apiUrl: ..., serverPublicKey: ... }` satırını depodaki `src/content/servers.ts` listesine ekle, commit'le ve push'la. Yeni APK'da sunucu "Hazır sunucular" altında görünür.
+2. Sunucuda çalıştır (şehir adını ve ülke kodunu değiştir):
 
-Nasıl çalışır: her telefon kendi WireGuard anahtar çiftini üretir ve sunucuya yalnızca açık anahtarı gönderir; sunucu ona 10.67.x.x adresinden bir tünel adresi verir. Sunucunun anahtarı uygulamaya sabitlendiği için sahte bir sunucu araya giremez. En fazla 150 cihaz, aynı IP'den saatte en fazla 10 yeni kayıt, 14 gün kullanılmayan cihazlar otomatik silinir. Kendi `telefon` profilin bundan etkilenmez.
+```bash
+sudo bash zeppelin-oracle-setup.sh public-on "Amsterdam" NL
+```
 
-Bilmen gerekenler: Bu sunucuyu kullanan herkes internete **senin sunucunun IP'siyle** çıkar; VPN başka bir IP üretmez. Bu yüzden listeyi yalnızca güvendiğin kişilerin kullandığı bir APK'da paylaş. Kapatmak için `sudo bash zeppelin-oracle-setup.sh public-off`, satırı tekrar görmek için `public-info`.
+3. Komutun en sonda yazdığı GitHub bağlantısını aç ve **Create**'e bas (GitHub hesabı gerekir). Bir bot sunucunun çalıştığını kontrol eder. LenstedReal onaylayınca sunucun yeni APK gerekmeden herkesin listesinde **Topluluk** etiketiyle görünür. Ayrıntılar: [TOPLULUK_TR.md](TOPLULUK_TR.md).
+
+Nasıl çalışır: her telefon kendi WireGuard anahtar çiftini üretir ve sunucuya yalnızca açık anahtarı gönderir; sunucu ona 10.67.x.x adresinden bir tünel adresi verir. Sunucunun anahtarı listeye sabitlendiği için sahte bir sunucu araya giremez. En fazla 150 cihaz, aynı IP'den saatte en fazla 30 yeni kayıt, 14 gün kullanılmayan cihazlar otomatik silinir. `public-on` ayrıca sistem günlüklerini yalnızca belleğe alır (en fazla 1 gün). Kendi `telefon` profilin bundan etkilenmez.
+
+Bilmen gerekenler: Bu sunucuyu kullanan herkes internete **senin sunucunun IP'siyle** çıkar. Kapatmak için `sudo bash zeppelin-oracle-setup.sh public-off`; satırı ve öneri bağlantısını tekrar görmek için `public-info`.
 
 ## 11. Tam koruma (önerilir)
 
@@ -123,7 +125,7 @@ Android **Ayarlar → Ağ ve internet → VPN → Zeppelin VPN yanındaki ⚙ �
 | `sudo bash zeppelin-oracle-setup.sh list` | Profiller ve son el sıkışmaları |
 | `sudo bash zeppelin-oracle-setup.sh remove tablet` | Profili iptal et |
 | `sudo bash zeppelin-oracle-setup.sh repair` | Yönlendirme ve güvenlik duvarını onar, WireGuard'ı yeniden başlat |
-| `sudo bash zeppelin-oracle-setup.sh public-on "Ad" DE` | Hazır sunucu modunu aç |
+| `sudo bash zeppelin-oracle-setup.sh public-on "Şehir" DE` | Sunucuyu paylaşıma aç ve listeye öneri bağlantısını yaz |
 | `sudo bash zeppelin-oracle-setup.sh public-info` | Uygulamaya eklenecek sunucu satırını göster |
 | `sudo bash zeppelin-oracle-setup.sh public-off` | Hazır sunucu modunu kapat |
 

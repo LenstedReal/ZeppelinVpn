@@ -20,6 +20,17 @@ Birim testlerinin kapsadıkları: WireGuard `.conf` ayrıştırıcı (geçerli/g
 
 Sunucu betiği denemesinde doğrulananlar: ilk kurulum, ikinci kurulumda kuralların ve profillerin çoğalmaması, 6 güvenlik duvarı kuralının tam metni, sunucu MTU 1420 ve telefon MTU 1280, `add` (yeni IP), aynı adla ve geçersiz adla `add` reddi, `list`, `remove` (sunucu dosyasından ve ev dizininden silme), boşalan IP'nin yeniden kullanılması, `status`, `show`, gizli dosyaların 600 izni, ekrana basılan profilin dosyayla birebir aynı olması.
 
+## 2.3.0 ile eklenen kontroller
+
+Toplam 29 test geçiyor. Yeni olanlar:
+
+- Sunucu listesi kuralları: biçim, özel ve yerel adreslerin reddi, yinelenen sunucular, gömülü sunucuların indirilen listeyle değiştirilememesi, depodaki `servers.json`'ın geçerli olması.
+- Başvuru metninden sunucu satırını bulma (yeni JSON ve eski biçim).
+- Bot uçtan uca: yerel bir sahte sunucuya gerçekten bağlanarak çalışan sunucunun kabulü, yanlış anahtarın reddi, repo sahibi olmayanın onayının reddi, onayla listeye ekleme, işletenin başvuruyu açan hesap olması, aynı sunucunun ikinci kez eklenmemesi, bozuk listenin `validate` ile yakalanması.
+- Sunucu betiği: JSON sunucu satırı, öneri bağlantısı, ülke kodu olmadan `public-on`'un reddi.
+
+Gerçek sunucuda doğrulananlar: Frankfurt sunucusunda kurulum, `public-on` ve günlük gizliliği adımı kullanıcı tarafından çalıştırıldı, çıktılar beklendiği gibi. GitHub üzerindeki bot ilk gerçek başvuruda çalışacak; burada sahte `gh`/`git` olmadan, kuru çalıştırma kipinde denendi.
+
 ## Burada yapılamayanlar
 
 - **`npm install` ve Metro paketleme:** npm kayıt sunucusu erişilemezdi. TypeScript denetimi gerçek React Native tipleri yerine benim yazdığım saplamalarla yapıldı.

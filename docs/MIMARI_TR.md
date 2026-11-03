@@ -9,7 +9,7 @@ flowchart TB
   subgraph Telefon["Android telefon"]
     UI["Arayüz (React Native + TypeScript)<br/>App.tsx, src/screens, src/components"]
     State["Uygulama durumu<br/>src/state/AppState.tsx"]
-    Logic["Saf mantık (test edilir)<br/>src/wireguard/config.ts, servers.ts<br/>src/settings.ts, src/lib"]
+    Logic["Saf mantık (test edilir)<br/>src/wireguard/config.ts, servers.ts<br/>src/serverList.ts, src/settings.ts, src/lib"]
     Bridge["Yerel modül köprüsü<br/>modules/zeppelin-vpn/index.ts ↔ ZeppelinVpnModule.kt"]
     TM["TunnelManager.kt<br/>tek iş parçacığı: bağlan, kes, sağlık, yeniden deneme"]
     Vault["SecureVault.kt<br/>Android Keystore AES-256-GCM"]
@@ -41,12 +41,15 @@ flowchart TB
 | Yol | Görev |
 |---|---|
 | `App.tsx`, `index.ts` | Giriş noktası, sekmeler, VPN açıklama penceresi |
-| `src/screens/` | Ana ekran, Profiller (hazır sunucular + kendi profillerin), Sunucu rehberi, Ayarlar |
+| `src/screens/` | Bağlantı, Sunucular (LenstedReal, topluluk ve kendi sunucuların), Kurulum rehberi, Ayarlar |
 | `src/components/` | Bağlan düğmesi, sekme çubuğu, profil düzenleyici, VPN açıklaması, ortak arayüz parçaları |
 | `src/state/AppState.tsx` | Tek durum kaynağı: profiller, seçim, ayarlar, tünel durumu, hız hesabı, çıkış IP kontrolü, bildirim izni |
 | `src/wireguard/config.ts` | WireGuard profil ayrıştırıcı/yazıcı, satır numaralı hatalar, ayar uygulamaları (DNS, MTU, keepalive), anahtar gizleme |
 | `src/wireguard/servers.ts` | Hazır sunucu yanıtından profil üretimi, hata kodları |
-| `src/content/servers.ts` | Hazır sunucu listesi (ad, ülke, kayıt adresi, sabitlenmiş sunucu anahtarı) |
+| `src/content/servers.ts` | Uygulamaya gömülü sunucular (indirilen liste bunları değiştiremez) |
+| `src/serverList.ts` | Sunucu listesi kuralları: doğrulama, özel adres reddi, birleştirme; uygulama ve bot aynı dosyayı kullanır |
+| `servers.json` | GitHub'daki hazır sunucu listesi; uygulama açılışta indirir |
+| `scripts/community-server.ts`, `.github/workflows/community-server.yml`, `.github/ISSUE_TEMPLATE/sunucu-oner.yml` | Topluluk sunucusu önerisi, botun kontrolü, `onay` etiketiyle listeye ekleme |
 | `src/content/guide.ts`, `privacy.ts` | Uygulama içi Oracle rehberi ve gizlilik politikası |
 | `src/settings.ts` | Ayar türleri, varsayılanlar, doğrulama |
 | `src/i18n/strings.ts` | Türkçe ve İngilizce metinler |
@@ -115,10 +118,35 @@ Kill switch, tüneli açık tutarak çalışır: Android tünel açıkken tüm t
 ## Hazır sunucu tasarımı
 
 - Telefon kendi anahtar çiftini üretir. **Gizli anahtar telefondan çıkmaz**, sunucuya yalnızca açık anahtar gider.
-- Sunucunun açık anahtarı `src/content/servers.ts` içinde sabitlenmiştir. Kayıt HTTP ile gitse de araya giren biri telefonu kendi sunucusuna yönlendiremez: anahtar tutmazsa uygulama bağlanmaz.
-- Havuz `10.67.0.0/16`, en fazla 150 cihaz, IP başına saatte 10 kayıt. 14 gün kullanılmayan kayıtlar silinir.
+- Sunucunun açık anahtarı listede (`src/content/servers.ts` ya da `servers.json`) sabitlenmiştir. Kayıt HTTP ile gitse de araya giren biri telefonu kendi sunucusuna yönlendiremez: anahtar tutmazsa uygulama bağlanmaz.
+- Havuz `10.67.0.0/16`, en fazla 150 cihaz, IP başına saatte 30 yeni kayıt (mobil operatörler çok kullanıcıyı tek IP arkasına koyar). 14 gün kullanılmayan kayıtlar silinir.
 - Sunucu kayıtları yalnızca gün olarak tutar (saat yok). İstek günlüğü yoktur. `public-on`, sistem günlüklerini yalnızca bellekte tutar (en fazla 1 gün).
-- Yeni ülke eklemek için o ülkede bir sunucu kurulur, `public-on "Şehir" ÜLKE` çalıştırılır ve basılan satır `src/content/servers.ts` listesine eklenir.
+- Yeni ülke eklemek için o ülkede bir sunucu kurulur, `public-on "Şehir" ÜLKE` çalıştırılır ve yazılan GitHub bağlantısıyla öneri gönderilir. Repo sahibi `onay` etiketini ekleyince bot sunucuyu `servers.json`'a yazar; yeni APK gerekmez. Ayrıntılar: [TOPLULUK_TR.md](TOPLULUK_TR.md).
+
+## Topluluk sunucuları
+
+```mermaid
+sequenceDiagram
+  participant O as Sunucu sahibi
+  participant G as GitHub (başvuru)
+  participant B as Bot (Actions)
+  participant L as LenstedReal
+  participant U as Uygulamalar
+  O->>O: public-on "Amsterdam" NL
+  O->>G: Bağlantıyı açar, Create
+  G->>B: Başvuru açıldı
+  B->>O: Sunucuya sorar (/v1/info): çalışıyor mu, anahtar aynı mı?
+  B->>G: Kontrol sonucu yorumu
+  L->>G: "onay" etiketi
+  G->>B: Etiket eklendi
+  B->>G: servers.json'a ekler, başvuruyu kapatır
+  U->>G: Açılışta servers.json indirir
+  U->>U: Topluluk sunucusu: ilk bağlantıda işleteni söyler, onay ister
+```
+
+- Listede sunucu başına işleten bilgisi (`operator`) bulunur: `LenstedReal` ya da başvuruyu açan GitHub kullanıcısı. Bot bunu başvurudan değil, GitHub hesabından alır.
+- Uygulama listeyi `raw.githubusercontent.com` üzerinden HTTPS ile indirir ve son sağlam listeyi telefonda saklar. İndirme Ayarlar → Gizlilik'ten kapatılabilir.
+- Geçersiz, yinelenen ya da özel/yerel adresli girdiler tek tek atlanır; en fazla 50 sunucu okunur.
 
 ## Güvenlik kararları
 

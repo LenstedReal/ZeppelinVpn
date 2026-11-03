@@ -56,6 +56,12 @@ Sunucu betiğini değiştirirsen uygulamadaki kopyayı yenile: `npm run embed-se
 - [docs/DEGISIKLIKLER_TR.md](docs/DEGISIKLIKLER_TR.md): eski Kotlin sürümüne göre farklar
 - [docs/TEST_RAPORU_TR.md](docs/TEST_RAPORU_TR.md): neyin test edildiği, neyin edilmediği
 
-## Lisanslar
+## Lisans
+
+Zeppelin VPN açık kaynaktır: **GNU GPL v3 veya sonrası** ([LICENSE](LICENSE)). Copyright (C) 2026 LenstedReal.
+
+Kodu kullanabilir, değiştirebilir ve dağıtabilirsin. Değiştirilmiş bir sürüm dağıtıyorsan onun kaynak kodunu da aynı lisansla açman gerekir. Böylece kimse bu kodun içine izleme ekleyip kapalı bir VPN olarak dağıtamaz.
+
+## Kullanılan kütüphaneler
 
 VPN motoru resmi [WireGuard Android tunnel](https://git.zx2c4.com/wireguard-android) kütüphanesidir (Apache-2.0, Maven Central: `com.wireguard.android:tunnel`). “WireGuard” Jason A. Donenfeld'in tescilli markasıdır; bu proje WireGuard projesiyle bağlantılı değildir.

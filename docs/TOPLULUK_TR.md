@@ -20,7 +20,9 @@ Listede iki tür sunucu vardır:
    ```
    sudo bash zeppelin-oracle-setup.sh public-on "Amsterdam" NL
    ```
-4. Komutun en sonda yazdığı `https://github.com/LenstedReal/ZeppelinVpn/issues/new?...` bağlantısını açar. Bilgiler doldurulmuş gelir; taahhüt kutularını işaretleyip **Create**'e basar. GitHub hesabı gerekir.
+4. Komutun en sonda yazdığı `https://github.com/LenstedReal/ZeppelinVpn/issues/new?...` bağlantısını **tarayıcıda** (Chrome) açar. Bilgiler doldurulmuş gelir; taahhüt kutularını işaretleyip **Create**'e basar. GitHub hesabı gerekir.
+
+   Bağlantı GitHub uygulamasında açılırsa form boş gelir (uygulama formları desteklemiyor). Sorun değil: başlık `Sunucu önerisi: ...` olarak kalsın, açıklama (Body) alanına komutun yazdığı `{ ... }` sunucu satırı yapıştırılsın. Bot satırı oradan da bulur.
 
 Bağlantıyı kaybederse `sudo bash zeppelin-oracle-setup.sh public-info` aynı bağlantıyı tekrar yazar. Uygulamada da **Kurulum → Sunucunu herkesle paylaş → Listeye öner** butonu formu açar.
 

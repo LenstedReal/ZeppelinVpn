@@ -649,9 +649,10 @@ public_info() {
   say ""
   if [ -n "$country" ] && command -v python3 >/dev/null 2>&1; then
     url="https://github.com/$REPO/issues/new?template=sunucu-oner.yml&title=$(urlencode "Sunucu önerisi: $name ($country)")&sunucu=$(urlencode "$line")"
-    say "${C_B}Sunucun herkesin uygulamasında görünsün mü?${C_0} Bu bağlantıyı aç ve \"Create\" de (GitHub hesabı gerekir):"
+    say "${C_B}Sunucun herkesin uygulamasında görünsün mü?${C_0} Bu bağlantıyı TARAYICIDA (Chrome) aç ve \"Create\" de (GitHub hesabı gerekir):"
     printf '  %s\n' "$url"
-    say "LenstedReal onaylayınca sunucun uygulamada \"Topluluk\" etiketiyle listelenir."
+    say "GitHub uygulamasında açılırsa form boş gelir: başlığı koru ve yukarıdaki sunucu satırını açıklamaya yapıştır."
+    say "LenstedReal onaylayınca sunucun uygulamadaki listeye girer (LenstedReal dışındakilerin sunucuları \"Topluluk\" etiketiyle görünür)."
   else
     say "Listeye önermek için ülke kodu gerekli: sudo bash $0 public-on \"$name\" DE"
   fi

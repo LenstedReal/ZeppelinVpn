@@ -9,8 +9,9 @@
 #   sudo bash zeppelin-oracle-setup.sh status       health check with fixes
 #   sudo bash zeppelin-oracle-setup.sh repair       re-apply forwarding + firewall rules, restart WireGuard
 #   sudo bash zeppelin-oracle-setup.sh public-on "Frankfurt" DE
-#                                                   shared server: app users connect with one tap
-#   sudo bash zeppelin-oracle-setup.sh public-info  the server entry to put into the app
+#                                                   shared server: app users connect with one tap;
+#                                                   also prints a link to propose it for the app's list
+#   sudo bash zeppelin-oracle-setup.sh public-info  the server line and the proposal link again
 #   sudo bash zeppelin-oracle-setup.sh public-off   stop the shared server
 #
 # What it fixes compared to a plain "apt install wireguard" on Oracle:
@@ -40,6 +41,8 @@ CLIENT_MTU=1280
 CLIENT_DNS="1.1.1.1, 1.0.0.1"
 TAG="zeppelin-vpn"
 API_PORT="${ZEPPELIN_API_PORT:-51821}"
+# GitHub repository whose app lists ready servers (proposal link printed by public-info).
+REPO="${ZEPPELIN_REPO:-LenstedReal/ZeppelinVpn}"
 PUBLIC_NET="10.67.0.0/16"
 PUBLIC_ADDR="10.67.0.1/16"
 API_DIR="${ZEPPELIN_API_DIR:-/usr/local/lib/zeppelin}"
@@ -376,7 +379,7 @@ STATE_FILE = os.environ.get("ZEPPELIN_PUBLIC_STATE", "/etc/wireguard/zeppelin-pu
 POOL = ipaddress.ip_network(os.environ.get("ZEPPELIN_PUBLIC_POOL", "10.67.0.0/16"))
 MAX_PEERS = int(os.environ.get("ZEPPELIN_MAX_PEERS", "150"))
 EXPIRE_DAYS = float(os.environ.get("ZEPPELIN_EXPIRE_DAYS", "14"))
-RATE_PER_HOUR = int(os.environ.get("ZEPPELIN_RATE_PER_HOUR", "10"))
+RATE_PER_HOUR = int(os.environ.get("ZEPPELIN_RATE_PER_HOUR", "30"))  # mobile carriers put many users behind one IP (CGNAT)
 SERVER_NAME = os.environ.get("ZEPPELIN_SERVER_NAME", "Zeppelin")
 ENDPOINT = os.environ.get("ZEPPELIN_ENDPOINT", "")
 SERVER_PUBLIC_KEY = os.environ.get("ZEPPELIN_SERVER_PUBLIC_KEY", "")
@@ -563,7 +566,8 @@ public_on() {
   local name="${1:-Oracle}" country="${2:-}"
   [ -f "$WG_CONF" ] || die "Önce kurulumu yap: sudo bash $0"
   [[ "$name" =~ ^[A-Za-z0-9\ ._-]{1,30}$ ]] || die "Sunucu adı yalnızca harf, rakam, boşluk, nokta, - ve _ içerebilir (en fazla 30)."
-  [[ -z "$country" || "$country" =~ ^[A-Za-z]{2}$ ]] || die "Ülke kodu iki harf olmalı (ör. DE)."
+  [[ "$country" =~ ^[A-Za-z]{2}$ ]] || die "Ülke kodu gerekli, iki harf (ör. DE): sudo bash $0 public-on \"$name\" DE"
+  country="${country^^}"
   command -v python3 >/dev/null 2>&1 || apt-get -o DPkg::Lock::Timeout=600 install -y python3
   step "Paylaşımlı sunucu açılıyor"
   if ! grep -qF "$PUBLIC_ADDR" "$WG_CONF"; then
@@ -631,19 +635,32 @@ JOURNALEOF
 }
 
 public_info() {
-  local name country
-  [ -f "$WG_DIR/zeppelin-public.env" ] || die "Paylaşımlı sunucu açık değil: sudo bash $0 public-on \"Ad\" DE"
+  local name country line url
+  [ -f "$WG_DIR/zeppelin-public.env" ] || die "Paylaşımlı sunucu açık değil: sudo bash $0 public-on \"Şehir\" DE"
   NAME=""; COUNTRY=""
   # shellcheck disable=SC1091
   . "$WG_DIR/zeppelin-public.env"
   name="${NAME:-Oracle}"; country="${COUNTRY:-}"
+  line="$(printf '{"id":"%s","name":"%s","country":"%s","apiUrl":"http://%s:%s","serverPublicKey":"%s"}' \
+    "$(printf '%s' "$PUBLIC_IP" | tr '.' '-')" "$name" "${country^^}" "$PUBLIC_IP" "$API_PORT" "$(cat "$WG_DIR/server.pub")")"
   say ""
-  say "${C_B}Uygulamaya eklenecek sunucu satırı${C_0} (src/content/servers.ts içindeki listeye yapıştır):"
+  say "${C_B}Sunucu satırı${C_0} (gizli bilgi içermez):"
+  printf '  %s\n' "$line"
   say ""
-  printf "  { id: '%s', name: '%s', country: '%s', apiUrl: 'http://%s:%s', serverPublicKey: '%s' },\n" \
-    "$(printf '%s' "$PUBLIC_IP" | tr '.' '-')" "$name" "$country" "$PUBLIC_IP" "$API_PORT" "$(cat "$WG_DIR/server.pub")"
+  if [ -n "$country" ] && command -v python3 >/dev/null 2>&1; then
+    url="https://github.com/$REPO/issues/new?template=sunucu-oner.yml&title=$(urlencode "Sunucu önerisi: $name ($country)")&sunucu=$(urlencode "$line")"
+    say "${C_B}Sunucun herkesin uygulamasında görünsün mü?${C_0} Bu bağlantıyı aç ve \"Create\" de (GitHub hesabı gerekir):"
+    printf '  %s\n' "$url"
+    say "LenstedReal onaylayınca sunucun uygulamada \"Topluluk\" etiketiyle listelenir."
+  else
+    say "Listeye önermek için ülke kodu gerekli: sudo bash $0 public-on \"$name\" DE"
+  fi
   say ""
-  say "${C_B}Oracle konsolunda:${C_0} Security List'e TCP $API_PORT giriş kuralı ekle (UDP $PORT kuralı zaten olmalı)."
+  say "${C_B}Oracle konsolunda:${C_0} Security List'te TCP $API_PORT ve UDP $PORT giriş kuralları olmalı."
+}
+
+urlencode() {
+  python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
 }
 
 public_off() {
@@ -738,7 +755,7 @@ main() {
     public-on) load_state; public_on "${2:-Oracle}" "${3:-}" ;;
     public-info) load_state; public_info ;;
     public-off) load_state; public_off ;;
-    -h|--help|help) sed -n '2,15p' "$0" ;;
+    -h|--help|help) sed -n '2,16p' "$0" ;;
     *) die "Bilinmeyen komut: $cmd (yardım: sudo bash $0 help)" ;;
   esac
 }

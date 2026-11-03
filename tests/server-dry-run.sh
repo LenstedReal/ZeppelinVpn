@@ -158,8 +158,11 @@ grep -qx "nat POSTROUTING -s 10.67.0.0/16 -o ens3 -m comment --comment zeppelin-
 grep -qx "filter INPUT -p tcp --dport 51821 -m comment --comment zeppelin-vpn -j ACCEPT" "$STUB_STATE/rules" || fail "API port rule"
 grep -q "ZEPPELIN_SERVER_PUBLIC_KEY=$(cat "$ZEPPELIN_WG_DIR/server.pub")" "$ZEPPELIN_UNIT_DIR/zeppelin-public-api.service" || fail "unit pins server key"
 python3 -m py_compile "$ZEPPELIN_API_DIR/zeppelin-public-api.py" || fail "API script"
-grep -q "apiUrl: 'http://129.151.10.20:51821'" "$T/out.txt" || fail "public-info entry"
-grep -q "name: 'Frankfurt 1', country: 'DE'" "$T/out.txt" || fail "public-info name"
+grep -q '"apiUrl":"http://129.151.10.20:51821"' "$T/out.txt" || fail "public-info entry"
+grep -q '"name":"Frankfurt 1","country":"DE"' "$T/out.txt" || fail "public-info name"
+grep -q "https://github.com/LenstedReal/ZeppelinVpn/issues/new?template=sunucu-oner.yml&title=Sunucu%20%C3%B6nerisi" "$T/out.txt" || fail "proposal link"
+grep -q "&sunucu=%7B%22id%22%3A%22129-151-10-20%22" "$T/out.txt" || fail "proposal link carries the server line"
+if run public-on "Frankfurt 1"; then fail "public-on without a country must fail"; fi
 grep -qx "Storage=volatile" "$ZEPPELIN_JOURNALD_DIR/zeppelin-privacy.conf" || fail "journald volatile"
 grep -qx "ForwardToSyslog=no" "$ZEPPELIN_JOURNALD_DIR/zeppelin-privacy.conf" || fail "journald no syslog"
 [ ! -e "$ZEPPELIN_LOG_DIR/journal" ] || fail "persistent journal must be removed"

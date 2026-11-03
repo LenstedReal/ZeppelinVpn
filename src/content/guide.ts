@@ -13,6 +13,8 @@ export interface GuideStep {
   install?: boolean;
   /** Shows the "open Android VPN settings" button. */
   alwaysOn?: boolean;
+  /** Shows the "propose to the list" button (GitHub issue form). */
+  share?: boolean;
 }
 
 export const STEPS: GuideStep[] = [
@@ -84,12 +86,13 @@ export const STEPS: GuideStep[] = [
     },
   },
   {
-    title: { tr: 'Sunucunu uygulamada hazır sunucu yap (isteğe bağlı)', en: 'Offer your server as a ready server (optional)' },
+    title: { tr: 'Sunucunu herkesle paylaş (isteğe bağlı)', en: 'Share your server with everyone (optional)' },
     body: {
-      tr: 'Böylece uygulamayı kuran herkes profil uğraşı olmadan, listeden sunucunu seçip tek dokunuşla bağlanır. Sunucuda aşağıdaki komutu çalıştır (ad ve ülke kodunu değiştir), sonra Oracle Security List’e TCP 51821 giriş kuralı ekle. Komutun yazdığı satırı src/content/servers.ts dosyasına ekleyip push’la; yeni APK bu sunucuyu listeler. Her cihaz kendi anahtarını alır, en fazla 150 cihaz, 14 gün kullanılmayan cihazlar silinir. Herkes senin sunucunun IP’siyle internete çıkar: yalnızca güvendiğin kişilerle paylaş.',
-      en: 'Then everyone who installs the app can pick your server from the list and connect with one tap, no profile needed. Run the command below on the server (change the name and country code), then add a TCP 51821 ingress rule to the Oracle Security List. Add the line it prints to src/content/servers.ts and push; the new APK lists the server. Each device gets its own key, at most 150 devices, devices unused for 14 days are removed. Everyone browses with your server’s IP: share it only with people you trust.',
+      tr: 'Sunucun uygulamadaki listeye girerse herkes tek dokunuşla bağlanabilir. Önce Oracle Security List’e TCP 51821 giriş kuralı ekle. Sonra sunucuda aşağıdaki komutu çalıştır (şehir adını ve ülke kodunu değiştir). Komutun yazdığı GitHub bağlantısını aç ve “Create”e bas (GitHub hesabı gerekir). Bir bot sunucunun çalıştığını kontrol eder; LenstedReal onaylayınca sunucun herkesin listesinde “Topluluk” etiketiyle görünür. Her cihaz kendi anahtarını alır, en fazla 150 cihaz, 14 gün kullanılmayan cihazlar silinir. Unutma: bağlanan herkes senin sunucunun IP’siyle internete çıkar.',
+      en: 'If your server gets into the app’s list, anyone can connect with one tap. First add a TCP 51821 ingress rule to the Oracle Security List. Then run the command below on the server (change the city and country code). Open the GitHub link it prints and tap “Create” (needs a GitHub account). A bot checks that the server works; once LenstedReal approves, your server appears in everyone’s list with a “Community” label. Each device gets its own key, at most 150 devices, devices unused for 14 days are removed. Keep in mind: everyone who connects browses with your server’s IP.',
     },
-    commands: ['sudo bash zeppelin-oracle-setup.sh public-on "Frankfurt" DE'],
+    commands: ['sudo bash zeppelin-oracle-setup.sh public-on "Amsterdam" NL'],
+    share: true,
   },
   {
     title: { tr: 'Tam koruma (önerilir)', en: 'Full protection (recommended)' },
@@ -184,6 +187,6 @@ export const SCRIPT_COMMANDS: { command: string; desc: Localized }[] = [
   { command: 'sudo bash zeppelin-oracle-setup.sh list', desc: { tr: 'Profiller ve son el sıkışmaları', en: 'Profiles and their last handshake' } },
   { command: 'sudo bash zeppelin-oracle-setup.sh remove tablet', desc: { tr: 'Profili iptal et', en: 'Revoke a profile' } },
   { command: 'sudo bash zeppelin-oracle-setup.sh repair', desc: { tr: 'Yönlendirme ve güvenlik duvarını onar', en: 'Repair forwarding and firewall' } },
-  { command: 'sudo bash zeppelin-oracle-setup.sh public-info', desc: { tr: 'Hazır sunucu satırını tekrar göster', en: 'Show the ready-server line again' } },
+  { command: 'sudo bash zeppelin-oracle-setup.sh public-info', desc: { tr: 'Sunucu satırını ve öneri bağlantısını tekrar göster', en: 'Show the server line and the proposal link again' } },
   { command: 'sudo bash zeppelin-oracle-setup.sh public-off', desc: { tr: 'Hazır sunucu modunu kapat', en: 'Turn off ready-server mode' } },
 ];

@@ -30,6 +30,10 @@ export interface Settings {
   statusNotification: boolean;
   /** The notification permission was asked once at the first start. */
   notificationAsked: boolean;
+  /** Download the ready-server list (servers.json) from GitHub when the app starts. */
+  serverListUpdate: boolean;
+  /** Community servers the user agreed to use after the operator warning. */
+  trustedServers: string[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +51,8 @@ export const DEFAULT_SETTINGS: Settings = {
   vpnDisclosureAccepted: false,
   statusNotification: true,
   notificationAsked: false,
+  serverListUpdate: true,
+  trustedServers: [],
 };
 
 /** IPv4 resolvers only: profiles from our server script are IPv4-only tunnels. */
@@ -67,6 +73,13 @@ function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+/** Server ids (same rule as src/serverList.ts), unique, at most 100. */
+function serverIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const ids = value.filter((v): v is string => typeof v === 'string' && /^[a-z0-9][a-z0-9-]{1,39}$/.test(v));
+  return [...new Set(ids)].slice(-100);
+}
+
 export function sanitizeSettings(raw: unknown): Settings {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const d = DEFAULT_SETTINGS;
@@ -85,6 +98,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     vpnDisclosureAccepted: bool(r.vpnDisclosureAccepted, d.vpnDisclosureAccepted),
     statusNotification: bool(r.statusNotification, d.statusNotification),
     notificationAsked: bool(r.notificationAsked, d.notificationAsked),
+    serverListUpdate: bool(r.serverListUpdate, d.serverListUpdate),
+    trustedServers: serverIds(r.trustedServers),
   };
 }
 

@@ -187,6 +187,12 @@ export function SettingsScreen() {
           value={settings.exitCheck}
           onChange={(exitCheck) => updateSettings({ exitCheck })}
         />
+        <ToggleRow
+          label={t('settings.serverListUpdate')}
+          description={t('settings.serverListUpdate.desc')}
+          value={settings.serverListUpdate}
+          onChange={(serverListUpdate) => updateSettings({ serverListUpdate })}
+        />
         <Button label={t('settings.privacyPolicy')} small onPress={() => setPrivacyOpen(true)} style={styles.inlineButton} />
       </Card>
 

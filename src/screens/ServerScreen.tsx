@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 import ZeppelinVpn from '../../modules/zeppelin-vpn';
 import { Bullet, Button, Card, CodeBlock, Screen, ScreenTitle, SectionLabel } from '../components/ui';
 import { useApp } from '../state/AppState';
 import { colors, space } from '../theme';
 import { NOTES, SCRIPT_COMMANDS, STEPS, TROUBLE } from '../content/guide';
 import { INSTALL_COMMAND } from '../generated/serverScript';
+import { PROPOSE_URL } from '../serverList';
 
 export function ServerScreen() {
   const app = useApp();
@@ -19,6 +20,10 @@ export function ServerScreen() {
     } catch {
       // ignore
     }
+  };
+
+  const propose = () => {
+    Linking.openURL(PROPOSE_URL).catch(() => app.showToast(t('share.openFailed')));
   };
 
   return (
@@ -45,6 +50,9 @@ export function ServerScreen() {
               style={styles.install}
               disabled={!app.nativeAvailable}
             />
+          ) : null}
+          {step.share ? (
+            <Button label={t('share.button')} variant="primary" onPress={propose} style={styles.install} />
           ) : null}
           {step.alwaysOn ? (
             <Button

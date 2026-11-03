@@ -8,6 +8,7 @@ import { colors, space } from '../theme';
 import { describe as describeCfg, parseConfig } from '../wireguard/config';
 import { flagEmoji, formatAgo, formatBytes, formatDuration, formatRate } from '../lib/format';
 import type { Tab } from '../components/TabBar';
+import { isOfficial } from '../serverList';
 
 const logo = require('../../assets/logo.png');
 
@@ -122,9 +123,16 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
         <Card>
           <View style={styles.profileRow}>
             <View style={styles.profileText}>
-              <Text style={styles.cardLabel}>{t('servers.ready').toLocaleUpperCase()}</Text>
+              <Text style={styles.cardLabel}>
+                {(isOfficial(app.selectedServer) ? t('servers.ready') : t('servers.communityOne')).toLocaleUpperCase()}
+              </Text>
               <Text style={styles.profileName} numberOfLines={1}>
                 {`${flagEmoji(app.selectedServer.country)} ${app.selectedServer.name}`.trim()}
+              </Text>
+              <Text style={styles.profileMeta} numberOfLines={1}>
+                {t('servers.runBy', {
+                  operator: isOfficial(app.selectedServer) ? app.selectedServer.operator : `@${app.selectedServer.operator}`,
+                })}
               </Text>
             </View>
             <Button label={t('home.change')} small onPress={() => onNavigate('profiles')} />

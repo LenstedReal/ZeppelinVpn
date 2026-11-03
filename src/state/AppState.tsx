@@ -1,10 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState as RNAppState } from 'react-native';
+import { Alert, AppState as RNAppState } from 'react-native';
 import ZeppelinVpn, { EMPTY_STATUS, normalizeStatus, type TunnelStatus } from '../../modules/zeppelin-vpn';
 import { DEFAULT_SETTINGS, resolveOverrides, sanitizeSettings, type Settings } from '../settings';
 import { applyOverrides, isCidr, isIP, parseConfig, parseEndpoint, serializeConfig, type Issue, type WgConfig } from '../wireguard/config';
 import { buildServerConfig, registerErrorFor, RegisterError, SERVER_ID_PREFIX, type RegisterResponse } from '../wireguard/servers';
-import { BUILTIN_SERVERS, type ServerEntry } from '../content/servers';
+import { BUILTIN_SERVERS } from '../content/servers';
+import { isOfficial, mergeServers, parseServerList, SERVER_LIST_URL, type ServerEntry } from '../serverList';
 import { hasKey, translate, type Lang, type StringKey } from '../i18n/strings';
 import { checkExit, type ExitInfo } from '../lib/netcheck';
 
@@ -24,12 +25,26 @@ interface VaultData {
 
 export type ExitState = 'idle' | 'checking' | 'ok' | 'fail' | 'off';
 
+export interface ServerListInfo {
+  /** idle: not downloaded in this session (a saved list may be in use). */
+  state: 'idle' | 'loading' | 'ok' | 'fail';
+  /** When the list in use was downloaded (epoch ms), 0 if never. */
+  fetchedAt: number;
+}
+
 export interface Rates {
   down: number;
   up: number;
 }
 
 type Translate = (key: StringKey, params?: Record<string, string | number>) => string;
+
+interface ConnectOptions {
+  /** The VPN disclosure was just accepted (the saved setting may not be updated yet). */
+  disclosureAccepted?: boolean;
+  /** The user just accepted the community server warning. */
+  communityAccepted?: boolean;
+}
 
 interface AppStateValue {
   ready: boolean;
@@ -43,7 +58,10 @@ interface AppStateValue {
   selectedProfile: Profile | null;
   /** Shared server chosen instead of an own profile (ids start with "srv:"). */
   selectedServer: ServerEntry | null;
+  /** Built-in servers plus the downloaded list (official first, then community). */
   servers: ServerEntry[];
+  serverList: ServerListInfo;
+  refreshServerList: () => void;
   selectProfile: (id: string) => Promise<void>;
   saveProfile: (input: { id?: string; name: string; conf: string }) => Promise<Profile>;
   deleteProfile: (id: string) => Promise<void>;
@@ -54,7 +72,7 @@ interface AppStateValue {
   exitState: ExitState;
   refreshExit: () => void;
   busy: boolean;
-  connect: (opts?: { disclosureAccepted?: boolean }) => Promise<void>;
+  connect: (opts?: ConnectOptions) => Promise<void>;
   disclosureOpen: boolean;
   acceptDisclosure: () => void;
   declineDisclosure: () => void;
@@ -78,7 +96,11 @@ const Ctx = createContext<AppStateValue | null>(null);
 
 const VAULT_PROFILES = 'profiles';
 const VAULT_DEVICE_KEYS = 'device_keys';
+const VAULT_SERVER_LIST = 'server_list';
 const REGISTER_TIMEOUT_MS = 10_000;
+const LIST_TIMEOUT_MS = 8_000;
+/** Downloaded again when the app comes to the foreground and the list is older than this. */
+const LIST_MAX_AGE_MS = 30 * 60_000;
 
 const serverId = (s: ServerEntry) => SERVER_ID_PREFIX + s.id;
 
@@ -86,8 +108,8 @@ function defaultSelection(profiles: Profile[]): string | null {
   return profiles[0]?.id ?? (BUILTIN_SERVERS[0] ? serverId(BUILTIN_SERVERS[0]) : null);
 }
 
-function isValidSelection(id: unknown, profiles: Profile[]): id is string {
-  return typeof id === 'string' && (profiles.some((p) => p.id === id) || BUILTIN_SERVERS.some((s) => serverId(s) === id));
+function isValidSelection(id: unknown, profiles: Profile[], servers: ServerEntry[]): id is string {
+  return typeof id === 'string' && (profiles.some((p) => p.id === id) || servers.some((s) => serverId(s) === id));
 }
 const EXIT_INTERVAL_MS = 60_000;
 
@@ -95,7 +117,7 @@ function newId(): string {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function readVault(raw: string | null): VaultData {
+function readVault(raw: string | null, servers: ServerEntry[]): VaultData {
   if (!raw) return { v: 1, selectedId: defaultSelection([]), profiles: [] };
   const data = JSON.parse(raw) as Partial<VaultData>;
   const profiles = Array.isArray(data.profiles)
@@ -103,7 +125,7 @@ function readVault(raw: string | null): VaultData {
         (p): p is Profile => !!p && typeof p.id === 'string' && typeof p.name === 'string' && typeof p.conf === 'string',
       )
     : [];
-  const selectedId = isValidSelection(data.selectedId, profiles) ? data.selectedId : defaultSelection(profiles);
+  const selectedId = isValidSelection(data.selectedId, profiles, servers) ? data.selectedId : defaultSelection(profiles);
   return { v: 1, selectedId, profiles };
 }
 
@@ -148,6 +170,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
   });
+  const [remoteServers, setRemoteServers] = useState<ServerEntry[]>([]);
+  const [serverList, setServerList] = useState<ServerListInfo>({ state: 'idle', fetchedAt: 0 });
+  const servers = useMemo(() => mergeServers(BUILTIN_SERVERS, remoteServers), [remoteServers]);
+  const serversRef = useRef(servers);
+  serversRef.current = servers;
+  const listFetchedAt = useRef(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSample = useRef<{ rx: number; tx: number; at: number } | null>(null);
   const autoConnectDone = useRef(false);
@@ -197,8 +225,25 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
     (async () => {
       if (native) {
+        // The last downloaded server list first, so a selected community server stays selected.
+        let cached: ServerEntry[] = [];
         try {
-          const data = readVault(await native.vaultLoad(VAULT_PROFILES));
+          const raw = await native.vaultLoad(VAULT_SERVER_LIST);
+          const saved = raw ? (JSON.parse(raw) as { fetchedAt?: unknown; data?: unknown }) : null;
+          const parsed = saved ? parseServerList(saved.data) : null;
+          if (saved && parsed) {
+            cached = parsed.servers;
+            listFetchedAt.current = typeof saved.fetchedAt === 'number' ? saved.fetchedAt : 0;
+            if (!cancelled) {
+              setRemoteServers(cached);
+              setServerList({ state: 'idle', fetchedAt: listFetchedAt.current });
+            }
+          }
+        } catch {
+          // no saved list: the built-in servers are shown until the download finishes
+        }
+        try {
+          const data = readVault(await native.vaultLoad(VAULT_PROFILES), mergeServers(BUILTIN_SERVERS, cached));
           if (!cancelled) setVault(data);
         } catch {
           if (!cancelled) setVaultError(true);
@@ -341,7 +386,54 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const selectedProfile = vault.profiles.find((p) => p.id === vault.selectedId) ?? null;
-  const selectedServer = BUILTIN_SERVERS.find((s) => serverId(s) === vault.selectedId) ?? null;
+  const selectedServer = servers.find((s) => serverId(s) === vault.selectedId) ?? null;
+
+  // ---- ready-server list from GitHub (servers.json)
+  const listRunning = useRef(false);
+  const refreshServerList = useCallback(async () => {
+    if (!settings.serverListUpdate || listRunning.current) return;
+    listRunning.current = true;
+    setServerList((prev) => ({ ...prev, state: 'loading' }));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), LIST_TIMEOUT_MS);
+    try {
+      const res = await fetch(SERVER_LIST_URL, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const parsed = parseServerList(await res.json());
+      if (!parsed) throw new Error('unusable list');
+      const fetchedAt = Date.now();
+      listFetchedAt.current = fetchedAt;
+      setRemoteServers(parsed.servers);
+      setServerList({ state: 'ok', fetchedAt });
+      if (native) {
+        try {
+          await native.vaultSave(VAULT_SERVER_LIST, JSON.stringify({ fetchedAt, data: { version: 1, servers: parsed.servers } }));
+        } catch {
+          // still used for this session
+        }
+      }
+    } catch {
+      // offline, GitHub unreachable or a broken file: keep the list we have
+      setServerList((prev) => ({ ...prev, state: 'fail' }));
+    } finally {
+      clearTimeout(timer);
+      listRunning.current = false;
+    }
+  }, [native, settings.serverListUpdate]);
+
+  useEffect(() => {
+    if (!ready || !appActive || Date.now() - listFetchedAt.current < LIST_MAX_AGE_MS) return;
+    refreshServerList();
+  }, [ready, appActive, refreshServerList]);
+
+  // A server removed from the list cannot stay selected.
+  useEffect(() => {
+    if (!ready) return;
+    const sel = vaultRef.current.selectedId;
+    if (sel && sel.startsWith(SERVER_ID_PREFIX) && !servers.some((s) => serverId(s) === sel)) {
+      persistVault({ ...vaultRef.current, selectedId: defaultSelection(vaultRef.current.profiles) }).catch(() => undefined);
+    }
+  }, [ready, servers, persistVault]);
 
   /** Registers this phone on a shared server and returns its WireGuard config. */
   const serverConfig = useCallback(
@@ -392,7 +484,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   // ---- tunnel control
-  const connect = useCallback(async (opts?: { disclosureAccepted?: boolean }) => {
+  const connectRef = useRef<(opts?: ConnectOptions) => Promise<void>>(async () => undefined);
+  const connect = useCallback(async (opts?: ConnectOptions) => {
     setErrorText(null);
     if (!native) {
       setErrorText(translate(lang, 'home.noNative'));
@@ -404,10 +497,28 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const selected = vaultRef.current.selectedId;
-    const server = BUILTIN_SERVERS.find((s) => serverId(s) === selected);
+    const server = serversRef.current.find((s) => serverId(s) === selected);
     const profile = vaultRef.current.profiles.find((p) => p.id === selected);
     if (!selected || (!server && !profile)) {
       setErrorText(errorMessage('NO_SELECTION'));
+      return;
+    }
+    // Community servers: say once who runs the server before the first connection to it.
+    if (server && !isOfficial(server) && !opts?.communityAccepted && !settings.trustedServers.includes(server.id)) {
+      Alert.alert(
+        translate(lang, 'community.title'),
+        translate(lang, 'community.body', { name: server.name, operator: server.operator }),
+        [
+          { text: translate(lang, 'common.cancel'), style: 'cancel' },
+          {
+            text: translate(lang, 'community.accept'),
+            onPress: () => {
+              updateSettings({ trustedServers: [...settings.trustedServers, server.id] });
+              connectRef.current({ ...opts, communityAccepted: true });
+            },
+          },
+        ],
+      );
       return;
     }
     let base: WgConfig | null = null;
@@ -441,7 +552,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setBusy(false);
     }
-  }, [native, lang, settings, errorMessage, issueText, serverConfig]);
+  }, [native, lang, settings, errorMessage, issueText, serverConfig, updateSettings]);
+  connectRef.current = connect;
 
   const acceptDisclosure = useCallback(() => {
     setDisclosureOpen(false);
@@ -523,6 +635,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
     setVault({ v: 1, selectedId: defaultSelection([]), profiles: [] });
     setVaultError(false);
+    setRemoteServers([]);
+    setServerList({ state: 'idle', fetchedAt: 0 });
+    listFetchedAt.current = 0;
     setSettings({ ...DEFAULT_SETTINGS });
   }, [native]);
 
@@ -545,7 +660,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     selectedId: vault.selectedId,
     selectedProfile,
     selectedServer,
-    servers: BUILTIN_SERVERS,
+    servers,
+    serverList,
+    refreshServerList,
     selectProfile,
     saveProfile,
     deleteProfile,

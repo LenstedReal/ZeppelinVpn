@@ -6,12 +6,13 @@ import { ProfileEditor, type EditorInput } from '../components/ProfileEditor';
 import { useApp, type Profile } from '../state/AppState';
 import { colors, radius, space } from '../theme';
 import { describe as describeCfg, parseConfig } from '../wireguard/config';
-import { flagEmoji } from '../lib/format';
+import { flagEmoji, formatAgo } from '../lib/format';
 import { SERVER_ID_PREFIX } from '../wireguard/servers';
+import { isOfficial, type ServerEntry } from '../serverList';
 
 export function ProfilesScreen() {
   const app = useApp();
-  const { t } = app;
+  const { t, lang } = app;
   const [editing, setEditing] = useState<EditorInput | null>(null);
 
   const fromClipboard = async () => {
@@ -56,41 +57,76 @@ export function ProfilesScreen() {
     ]);
   };
 
+  const official = app.servers.filter(isOfficial);
+  const community = app.servers.filter((srv) => !isOfficial(srv));
+  const list = app.serverList;
+  const listInfo = !app.settings.serverListUpdate
+    ? t('servers.updatesOff')
+    : list.state === 'loading'
+      ? t('servers.refreshing')
+      : list.state === 'fail'
+        ? t('servers.refreshFailed')
+        : list.fetchedAt > 0
+          ? t('servers.updated', { ago: formatAgo((Date.now() - list.fetchedAt) / 1000, lang) })
+          : '';
+
+  const serverCard = (srv: ServerEntry) => {
+    const id = SERVER_ID_PREFIX + srv.id;
+    const selected = id === app.selectedId;
+    return (
+      <Card key={id} style={selected ? styles.selectedCard : undefined}>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>
+            {`${flagEmoji(srv.country)} ${srv.name}`.trim()}
+          </Text>
+          {selected ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{t('profiles.selected')}</Text>
+            </View>
+          ) : null}
+        </View>
+        <Text style={styles.meta} numberOfLines={1}>
+          {t('servers.runBy', { operator: isOfficial(srv) ? srv.operator : `@${srv.operator}` })}
+        </Text>
+        {!selected ? (
+          <View style={styles.actions}>
+            <Button label={t('profiles.use')} small variant="primary" onPress={() => app.selectProfile(id)} />
+          </View>
+        ) : null}
+      </Card>
+    );
+  };
+
   return (
     <Screen>
       <ScreenTitle title={t('profiles.title')} subtitle={t('profiles.subtitle')} />
 
-      {app.servers.length > 0 ? (
+      <Text style={styles.section}>{t('servers.title').toLocaleUpperCase()}</Text>
+      <Text style={styles.sectionNote}>{t('servers.subtitle')}</Text>
+      {official.map(serverCard)}
+
+      {community.length > 0 ? (
         <>
-          <Text style={styles.section}>{t('servers.title').toLocaleUpperCase()}</Text>
-          <Text style={styles.sectionNote}>{t('servers.subtitle')}</Text>
-          {app.servers.map((srv) => {
-            const id = SERVER_ID_PREFIX + srv.id;
-            const selected = id === app.selectedId;
-            return (
-              <Card key={id} style={selected ? styles.selectedCard : undefined}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {`${flagEmoji(srv.country)} ${srv.name}`.trim()}
-                  </Text>
-                  {selected ? (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{t('profiles.selected')}</Text>
-                    </View>
-                  ) : null}
-                </View>
-                {!selected ? (
-                  <View style={styles.actions}>
-                    <Button label={t('profiles.use')} small variant="primary" onPress={() => app.selectProfile(id)} />
-                  </View>
-                ) : null}
-              </Card>
-            );
-          })}
-          <Text style={styles.section}>{t('servers.mine').toLocaleUpperCase()}</Text>
+          <Text style={styles.section}>{t('servers.community').toLocaleUpperCase()}</Text>
+          <Text style={styles.sectionNote}>{t('servers.communityNote')}</Text>
+          {community.map(serverCard)}
         </>
       ) : null}
 
+      <View style={styles.listRow}>
+        <Text style={styles.listInfo}>{listInfo}</Text>
+        {app.settings.serverListUpdate ? (
+          <Button
+            label={t('servers.refresh')}
+            small
+            variant="ghost"
+            onPress={app.refreshServerList}
+            disabled={app.serverList.state === 'loading'}
+          />
+        ) : null}
+      </View>
+
+      <Text style={styles.section}>{t('servers.mine').toLocaleUpperCase()}</Text>
       <View style={styles.importRow}>
         {app.nativeAvailable ? (
           <>
@@ -172,4 +208,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: space.sm, marginTop: space.md, flexWrap: 'wrap' },
   section: { color: colors.textDim, fontSize: 12, fontWeight: '700', letterSpacing: 1.4, marginTop: space.md, marginBottom: space.sm },
   sectionNote: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginBottom: space.sm },
+  listRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, marginBottom: space.sm },
+  listInfo: { color: colors.textDim, fontSize: 12, lineHeight: 17, flex: 1 },
 });

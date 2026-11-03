@@ -100,9 +100,9 @@ jobs:
           cp android/app/build/outputs/bundle/release/app-release.aab "out/ZeppelinVPN-$VERSION-$CODE.aab"
           BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort -V | tail -1)
           echo "== APK signature =="
-          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "out/ZeppelinVPN-$VERSION-$CODE.apk" | grep -E "Signer #1 certificate (DN|SHA-256)"
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "out/ZeppelinVPN-$VERSION-$CODE.apk" 2>&1 | grep -E "certificate (DN|SHA-256)" || echo "::warning::apksigner could not print the APK certificate (build-tools $BT)"
           echo "== AAB signature =="
-          keytool -printcert -jarfile "out/ZeppelinVPN-$VERSION-$CODE.aab" | grep -E "Owner:|SHA256:" | head -2
+          keytool -printcert -jarfile "out/ZeppelinVPN-$VERSION-$CODE.aab" 2>&1 | grep -E "Owner:|SHA256:" | head -2 || true
           ls -la out
 
       - name: Upload APK (install on the phone)

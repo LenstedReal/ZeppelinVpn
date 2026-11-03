@@ -84,6 +84,14 @@ export const STEPS: GuideStep[] = [
     },
   },
   {
+    title: { tr: 'Sunucunu uygulamada hazır sunucu yap (isteğe bağlı)', en: 'Offer your server as a ready server (optional)' },
+    body: {
+      tr: 'Böylece uygulamayı kuran herkes profil uğraşı olmadan, listeden sunucunu seçip tek dokunuşla bağlanır. Sunucuda aşağıdaki komutu çalıştır (ad ve ülke kodunu değiştir), sonra Oracle Security List’e TCP 51821 giriş kuralı ekle. Komutun yazdığı satırı src/content/servers.ts dosyasına ekleyip push’la; yeni APK bu sunucuyu listeler. Her cihaz kendi anahtarını alır, en fazla 150 cihaz, 14 gün kullanılmayan cihazlar silinir. Herkes senin sunucunun IP’siyle internete çıkar: yalnızca güvendiğin kişilerle paylaş.',
+      en: 'Then everyone who installs the app can pick your server from the list and connect with one tap, no profile needed. Run the command below on the server (change the name and country code), then add a TCP 51821 ingress rule to the Oracle Security List. Add the line it prints to src/content/servers.ts and push; the new APK lists the server. Each device gets its own key, at most 150 devices, devices unused for 14 days are removed. Everyone browses with your server’s IP: share it only with people you trust.',
+    },
+    commands: ['sudo bash zeppelin-oracle-setup.sh public-on "Frankfurt" DE'],
+  },
+  {
     title: { tr: 'Tam koruma (önerilir)', en: 'Full protection (recommended)' },
     body: {
       tr: 'Android ayarlarında Zeppelin VPN için “Her zaman açık VPN” ve “VPN olmadan bağlantıları engelle”yi aç. Telefon açılırken veya uygulama güncellenirken bile trafik sızmaz.',
@@ -176,4 +184,6 @@ export const SCRIPT_COMMANDS: { command: string; desc: Localized }[] = [
   { command: 'sudo bash zeppelin-oracle-setup.sh list', desc: { tr: 'Profiller ve son el sıkışmaları', en: 'Profiles and their last handshake' } },
   { command: 'sudo bash zeppelin-oracle-setup.sh remove tablet', desc: { tr: 'Profili iptal et', en: 'Revoke a profile' } },
   { command: 'sudo bash zeppelin-oracle-setup.sh repair', desc: { tr: 'Yönlendirme ve güvenlik duvarını onar', en: 'Repair forwarding and firewall' } },
+  { command: 'sudo bash zeppelin-oracle-setup.sh public-info', desc: { tr: 'Hazır sunucu satırını tekrar göster', en: 'Show the ready-server line again' } },
+  { command: 'sudo bash zeppelin-oracle-setup.sh public-off', desc: { tr: 'Hazır sunucu modunu kapat', en: 'Turn off ready-server mode' } },
 ];

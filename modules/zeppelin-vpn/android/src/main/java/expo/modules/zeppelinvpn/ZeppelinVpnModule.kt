@@ -10,6 +10,7 @@ import android.net.VpnService
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import com.wireguard.crypto.KeyPair
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -142,6 +143,12 @@ class ZeppelinVpnModule : Module() {
       } catch (e: Exception) {
         false
       }
+    }
+
+    // Key pair for a shared server: the private key stays on the phone, only the public key is sent.
+    Function("generateKeyPair") {
+      val pair = KeyPair()
+      mapOf("privateKey" to pair.privateKey.toBase64(), "publicKey" to pair.publicKey.toBase64())
     }
 
     Function("deviceLanguage") {

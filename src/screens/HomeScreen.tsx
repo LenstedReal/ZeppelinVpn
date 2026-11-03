@@ -117,7 +117,19 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
         </Notice>
       ) : null}
 
-      {profile ? (
+      {app.selectedServer ? (
+        <Card>
+          <View style={styles.profileRow}>
+            <View style={styles.profileText}>
+              <Text style={styles.cardLabel}>{t('servers.ready').toLocaleUpperCase()}</Text>
+              <Text style={styles.profileName} numberOfLines={1}>
+                {`${flagEmoji(app.selectedServer.country)} ${app.selectedServer.name}`.trim()}
+              </Text>
+            </View>
+            <Button label={t('home.change')} small onPress={() => onNavigate('profiles')} />
+          </View>
+        </Card>
+      ) : profile ? (
         <Card>
           <View style={styles.profileRow}>
             <View style={styles.profileText}>

@@ -1,6 +1,6 @@
 // Android build settings needed by the WireGuard tunnel library.
 // Applied by "npx expo prebuild"; nothing here has to be edited by hand.
-const { withGradleProperties } = require('expo/config-plugins');
+const { withAndroidManifest, withGradleProperties } = require('expo/config-plugins');
 
 function setProperty(properties, key, value) {
   const existing = properties.find((p) => p.type === 'property' && p.key === key);
@@ -9,6 +9,13 @@ function setProperty(properties, key, value) {
 }
 
 module.exports = function withZeppelinAndroid(config) {
+  // Shared servers register over plain HTTP (only the device's public key is sent and the
+  // server's WireGuard key is pinned in the app), so cleartext must be allowed.
+  config = withAndroidManifest(config, (cfg) => {
+    const app = cfg.modResults.manifest.application && cfg.modResults.manifest.application[0];
+    if (app) app.$['android:usesCleartextTraffic'] = 'true';
+    return cfg;
+  });
   return withGradleProperties(config, (cfg) => {
     // The WireGuard library uses java.time (InetEndpoint), which Android ships from 8.0 (API 26).
     setProperty(cfg.modResults, 'android.minSdkVersion', '26');

@@ -2,7 +2,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { AppState as RNAppState } from 'react-native';
 import ZeppelinVpn, { EMPTY_STATUS, normalizeStatus, type TunnelStatus } from '../../modules/zeppelin-vpn';
 import { DEFAULT_SETTINGS, resolveOverrides, sanitizeSettings, type Settings } from '../settings';
-import { applyOverrides, isIP, parseConfig, serializeConfig, type Issue } from '../wireguard/config';
+import { applyOverrides, isCidr, isIP, parseConfig, parseEndpoint, serializeConfig, type Issue, type WgConfig } from '../wireguard/config';
+import { buildServerConfig, registerErrorFor, RegisterError, SERVER_ID_PREFIX, type RegisterResponse } from '../wireguard/servers';
+import { BUILTIN_SERVERS, type ServerEntry } from '../content/servers';
 import { hasKey, translate, type Lang, type StringKey } from '../i18n/strings';
 import { checkExit, type ExitInfo } from '../lib/netcheck';
 
@@ -39,6 +41,9 @@ interface AppStateValue {
   profiles: Profile[];
   selectedId: string | null;
   selectedProfile: Profile | null;
+  /** Shared server chosen instead of an own profile (ids start with "srv:"). */
+  selectedServer: ServerEntry | null;
+  servers: ServerEntry[];
   selectProfile: (id: string) => Promise<void>;
   saveProfile: (input: { id?: string; name: string; conf: string }) => Promise<Profile>;
   deleteProfile: (id: string) => Promise<void>;
@@ -68,6 +73,18 @@ interface AppStateValue {
 const Ctx = createContext<AppStateValue | null>(null);
 
 const VAULT_PROFILES = 'profiles';
+const VAULT_DEVICE_KEYS = 'device_keys';
+const REGISTER_TIMEOUT_MS = 10_000;
+
+const serverId = (s: ServerEntry) => SERVER_ID_PREFIX + s.id;
+
+function defaultSelection(profiles: Profile[]): string | null {
+  return profiles[0]?.id ?? (BUILTIN_SERVERS[0] ? serverId(BUILTIN_SERVERS[0]) : null);
+}
+
+function isValidSelection(id: unknown, profiles: Profile[]): id is string {
+  return typeof id === 'string' && (profiles.some((p) => p.id === id) || BUILTIN_SERVERS.some((s) => serverId(s) === id));
+}
 const EXIT_INTERVAL_MS = 60_000;
 
 function newId(): string {
@@ -75,14 +92,14 @@ function newId(): string {
 }
 
 function readVault(raw: string | null): VaultData {
-  if (!raw) return { v: 1, selectedId: null, profiles: [] };
+  if (!raw) return { v: 1, selectedId: defaultSelection([]), profiles: [] };
   const data = JSON.parse(raw) as Partial<VaultData>;
   const profiles = Array.isArray(data.profiles)
     ? data.profiles.filter(
         (p): p is Profile => !!p && typeof p.id === 'string' && typeof p.name === 'string' && typeof p.conf === 'string',
       )
     : [];
-  const selectedId = profiles.some((p) => p.id === data.selectedId) ? (data.selectedId as string) : profiles[0]?.id ?? null;
+  const selectedId = isValidSelection(data.selectedId, profiles) ? data.selectedId : defaultSelection(profiles);
   return { v: 1, selectedId, profiles };
 }
 
@@ -109,7 +126,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const native = ZeppelinVpn;
   const [ready, setReady] = useState(false);
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [vault, setVault] = useState<VaultData>({ v: 1, selectedId: null, profiles: [] });
+  const [vault, setVault] = useState<VaultData>({ v: 1, selectedId: defaultSelection([]), profiles: [] });
   const [vaultError, setVaultError] = useState(false);
   const [status, setStatus] = useState<TunnelStatus>(() => normalizeStatus(native?.getStatus()));
   const [rates, setRates] = useState<Rates>({ down: 0, up: 0 });
@@ -300,13 +317,62 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     async (id: string) => {
       const current = vaultRef.current;
       const profiles = current.profiles.filter((p) => p.id !== id);
-      const selectedId = current.selectedId === id ? profiles[0]?.id ?? null : current.selectedId;
+      const selectedId = current.selectedId === id ? defaultSelection(profiles) : current.selectedId;
       await persistVault({ v: 1, profiles, selectedId });
     },
     [persistVault],
   );
 
   const selectedProfile = vault.profiles.find((p) => p.id === vault.selectedId) ?? null;
+  const selectedServer = BUILTIN_SERVERS.find((s) => serverId(s) === vault.selectedId) ?? null;
+
+  /** Registers this phone on a shared server and returns its WireGuard config. */
+  const serverConfig = useCallback(
+    async (server: ServerEntry): Promise<WgConfig> => {
+      if (!native) throw new RegisterError('REGISTER_FAILED');
+      let keys: Record<string, { privateKey: string; publicKey: string }> = {};
+      try {
+        const raw = await native.vaultLoad(VAULT_DEVICE_KEYS);
+        if (raw) keys = JSON.parse(raw);
+      } catch {
+        keys = {};
+      }
+      let pair = keys[server.id];
+      if (!pair) {
+        pair = native.generateKeyPair();
+        keys[server.id] = pair;
+        await native.vaultSave(VAULT_DEVICE_KEYS, JSON.stringify(keys));
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), REGISTER_TIMEOUT_MS);
+      let res: Response;
+      try {
+        res = await fetch(`${server.apiUrl}/v1/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicKey: pair.publicKey }),
+          signal: controller.signal,
+        });
+      } catch {
+        throw new RegisterError('REGISTER_FAILED');
+      } finally {
+        clearTimeout(timer);
+      }
+      let body: RegisterResponse | null = null;
+      try {
+        body = (await res.json()) as RegisterResponse;
+      } catch {
+        body = null;
+      }
+      if (!res.ok || !body) throw new RegisterError(registerErrorFor(res.status, body));
+      return buildServerConfig(server.name, server.serverPublicKey, pair.privateKey, body, {
+        isCidr,
+        isIP,
+        isEndpoint: (v) => parseEndpoint(v) !== null,
+      });
+    },
+    [native],
+  );
 
   // ---- tunnel control
   const connect = useCallback(async (opts?: { disclosureAccepted?: boolean }) => {
@@ -320,26 +386,37 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setDisclosureOpen(true);
       return;
     }
-    const profile = vaultRef.current.profiles.find((p) => p.id === vaultRef.current.selectedId);
-    if (!profile) {
+    const selected = vaultRef.current.selectedId;
+    const server = BUILTIN_SERVERS.find((s) => serverId(s) === selected);
+    const profile = vaultRef.current.profiles.find((p) => p.id === selected);
+    if (!selected || (!server && !profile)) {
       setErrorText(errorMessage('NO_SELECTION'));
       return;
     }
-    const parsed = parseConfig(profile.conf);
-    if (!parsed.config) {
-      setErrorText(errorMessage('BAD_CONFIG', parsed.errors.map(issueText).join(' ')));
-      return;
+    let base: WgConfig | null = null;
+    if (profile) {
+      const parsed = parseConfig(profile.conf);
+      if (!parsed.config) {
+        setErrorText(errorMessage('BAD_CONFIG', parsed.errors.map(issueText).join(' ')));
+        return;
+      }
+      base = parsed.config;
     }
-    const effective = serializeConfig(applyOverrides(parsed.config, resolveOverrides(settings, isIP)));
     setBusy(true);
     try {
+      if (server) base = await serverConfig(server);
+      const effective = serializeConfig(applyOverrides(base as WgConfig, resolveOverrides(settings, isIP)));
       const allowed = await native.prepare();
       if (!allowed) {
         setErrorText(errorMessage('NO_PERMISSION'));
         return;
       }
-      await native.connect(effective, profile.id, profile.name);
+      await native.connect(effective, selected, server ? server.name : (profile as Profile).name);
     } catch (e) {
+      if (e instanceof RegisterError) {
+        setErrorText(errorMessage(e.code));
+        return;
+      }
       const err = e as { code?: string; message?: string };
       const now = normalizeStatus(native.getStatus());
       // While the native side retries on its own, the status card already explains it.
@@ -347,7 +424,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setBusy(false);
     }
-  }, [native, lang, settings, errorMessage, issueText]);
+  }, [native, lang, settings, errorMessage, issueText, serverConfig]);
 
   const acceptDisclosure = useCallback(() => {
     setDisclosureOpen(false);
@@ -395,7 +472,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       await native.vaultClear();
       native.saveSettings(JSON.stringify(DEFAULT_SETTINGS));
     }
-    setVault({ v: 1, selectedId: null, profiles: [] });
+    setVault({ v: 1, selectedId: defaultSelection([]), profiles: [] });
     setVaultError(false);
     setSettings({ ...DEFAULT_SETTINGS });
   }, [native]);
@@ -418,6 +495,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     profiles: vault.profiles,
     selectedId: vault.selectedId,
     selectedProfile,
+    selectedServer,
+    servers: BUILTIN_SERVERS,
     selectProfile,
     saveProfile,
     deleteProfile,

@@ -43,6 +43,7 @@ declare class ZeppelinVpnNativeModule extends NativeModule<ZeppelinVpnEvents> {
   readClipboard(): Promise<string | null>;
   writeClipboard(text: string): Promise<void>;
   openVpnSettings(): boolean;
+  generateKeyPair(): { privateKey: string; publicKey: string };
   deviceLanguage(): string;
   appVersion(): string;
 }

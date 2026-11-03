@@ -32,3 +32,11 @@ Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Eski Kotlin kodu `ma
 - Arayüz: Expo SDK 58 (React Native 0.88, TypeScript), ek gezinme kütüphanesi yok.
 - VPN motoru: `modules/zeppelin-vpn` yerel Expo modülü (Kotlin). Tüm tünel işlemleri tek bir arka plan iş parçacığında sıralı çalışır; Always-on geri çağrısı Application.onCreate'te kaydedilir.
 - Minimum Android 8.0 (WireGuard kütüphanesi `java.time` kullanır).
+
+## 2.1.0
+
+- **Canlı durum bildirimi:** VPN açıkken bildirimde bağlantı durumu, anlık indirme/yükleme hızı ve bağlı kalınan süre görünür; bildirimdeki "Bağlantıyı kes" ile kapatılır. Kilit ekranında yalnızca "VPN açık" yazar. Ayarlar → Bildirimler'den kapatılabilir.
+- **Bildirim izni:** Android 13 ve üstünde uygulama ilk açılışta bildirim izni ister; izin verilmezse Ayarlar'da "Bildirimlere izin ver" düğmesi çıkar.
+- **by LenstedReal:** ana ekranda ve Ayarlar → Hakkında'da geliştirici adı.
+- **Hazır sunucu:** Frankfurt (Oracle Cloud). Kendi sunucunu kurma rehberi ve kendi profillerin aynen duruyor.
+- **Gizlilik:** politika artık hazır sunucuları da doğru anlatıyor. Hazır sunucuda kayıt tarihleri yalnızca gün olarak tutulur (saat yok); `public-on` sistem günlüklerini yalnızca belleğe alır (en fazla 1 gün), rsyslog'u kapatır ve eski syslog/auth.log kayıtlarını siler.

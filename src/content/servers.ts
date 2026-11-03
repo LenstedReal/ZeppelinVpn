@@ -18,5 +18,5 @@ export interface ServerEntry {
 }
 
 export const BUILTIN_SERVERS: ServerEntry[] = [
-  // { id: '129-151-10-20', name: 'Frankfurt', country: 'DE', apiUrl: 'http://129.151.10.20:51821', serverPublicKey: '...' },
+  { id: '158-101-173-231', name: 'Frankfurt', country: 'DE', apiUrl: 'http://158.101.173.231:51821', serverPublicKey: '5dyfznfuc1D1BUFkDPmeK7THkCPXtdTpGHsRD+eHYgI=' },
 ];

@@ -19,7 +19,8 @@ EOF
 for c in apt-get debconf-set-selections netfilter-persistent chown; do
   stub "$c" <<'EOF'
 #!/usr/bin/env bash
-cat >/dev/null 2>&1 || true
+# only debconf-set-selections reads stdin; the others must not wait for input
+if [ "$(basename "$0")" = "debconf-set-selections" ]; then cat >/dev/null 2>&1 || true; fi
 echo "$(basename "$0") $*" >> "$STUB_STATE/calls"
 EOF
 done
@@ -82,6 +83,7 @@ key="$table $chain $*"
 case "$op" in
   -C) grep -qxF -- "$key" "$STUB_STATE/rules" 2>/dev/null ;;
   -I) echo "$key" >> "$STUB_STATE/rules" ;;
+  -D) grep -vxF -- "$key" "$STUB_STATE/rules" > "$STUB_STATE/rules.tmp" || true; mv "$STUB_STATE/rules.tmp" "$STUB_STATE/rules" ;;
   *) exit 2 ;;
 esac
 EOF
@@ -92,6 +94,9 @@ export STUB_HOME="$T/home/ubuntu"
 export SUDO_USER=ubuntu
 export ZEPPELIN_WG_DIR="$T/etc/wireguard"
 export ZEPPELIN_SYSCTL_FILE="$T/etc/sysctl.d/99-zeppelin-vpn.conf"
+export ZEPPELIN_API_DIR="$T/usr/local/lib/zeppelin"
+export ZEPPELIN_UNIT_DIR="$T/etc/systemd/system"
+mkdir -p "$ZEPPELIN_UNIT_DIR"
 WG_CONF="$ZEPPELIN_WG_DIR/wg0.conf"
 CLIENTS="$ZEPPELIN_WG_DIR/zeppelin-clients"
 
@@ -142,6 +147,20 @@ grep -q "^Address = 10.66.66.2/32" "$CLIENTS/laptop.conf" || fail "freed IP shou
 
 run status || { cat "$T/out.txt"; fail "status"; }
 run show laptop || fail "show"
+
+run public-on "Frankfurt 1" DE || { cat "$T/out.txt"; fail "public-on"; }
+grep -q "^Address = 10.66.66.1/24, 10.67.0.1/16$" "$WG_CONF" || fail "public address on wg0"
+grep -qx "nat POSTROUTING -s 10.67.0.0/16 -o ens3 -m comment --comment zeppelin-vpn -j MASQUERADE" "$STUB_STATE/rules" || fail "public NAT rule"
+grep -qx "filter INPUT -p tcp --dport 51821 -m comment --comment zeppelin-vpn -j ACCEPT" "$STUB_STATE/rules" || fail "API port rule"
+grep -q "ZEPPELIN_SERVER_PUBLIC_KEY=$(cat "$ZEPPELIN_WG_DIR/server.pub")" "$ZEPPELIN_UNIT_DIR/zeppelin-public-api.service" || fail "unit pins server key"
+python3 -m py_compile "$ZEPPELIN_API_DIR/zeppelin-public-api.py" || fail "API script"
+grep -q "apiUrl: 'http://129.151.10.20:51821'" "$T/out.txt" || fail "public-info entry"
+grep -q "name: 'Frankfurt 1', country: 'DE'" "$T/out.txt" || fail "public-info name"
+run public-on "Frankfurt 1" DE || fail "public-on twice"
+[ "$(grep -c '10.67.0.1/16' "$WG_CONF")" = "1" ] || fail "public address must not repeat"
+run public-off || fail "public-off"
+if grep -q "dport 51821" "$STUB_STATE/rules"; then fail "API port rule must be removed"; fi
+if run public-info; then fail "public-info after public-off must fail"; fi
 
 if [ -n "${ZEPPELIN_DRYRUN_OUT:-}" ]; then
   mkdir -p "$ZEPPELIN_DRYRUN_OUT"

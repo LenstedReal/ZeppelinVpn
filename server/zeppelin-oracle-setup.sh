@@ -8,6 +8,10 @@
 #   sudo bash zeppelin-oracle-setup.sh remove NAME  revoke a profile
 #   sudo bash zeppelin-oracle-setup.sh status       health check with fixes
 #   sudo bash zeppelin-oracle-setup.sh repair       re-apply forwarding + firewall rules, restart WireGuard
+#   sudo bash zeppelin-oracle-setup.sh public-on "Frankfurt" DE
+#                                                   shared server: app users connect with one tap
+#   sudo bash zeppelin-oracle-setup.sh public-info  the server entry to put into the app
+#   sudo bash zeppelin-oracle-setup.sh public-off   stop the shared server
 #
 # What it fixes compared to a plain "apt install wireguard" on Oracle:
 #   * Oracle's Ubuntu image ships iptables rules that end with REJECT in INPUT and FORWARD.
@@ -35,6 +39,12 @@ SERVER_MTU=1420
 CLIENT_MTU=1280
 CLIENT_DNS="1.1.1.1, 1.0.0.1"
 TAG="zeppelin-vpn"
+API_PORT="${ZEPPELIN_API_PORT:-51821}"
+PUBLIC_NET="10.67.0.0/16"
+PUBLIC_ADDR="10.67.0.1/16"
+API_DIR="${ZEPPELIN_API_DIR:-/usr/local/lib/zeppelin}"
+UNIT_DIR="${ZEPPELIN_UNIT_DIR:-/etc/systemd/system}"
+API_UNIT="zeppelin-public-api.service"
 
 if [ -t 1 ]; then
   C_OK=$'\e[32m'; C_WARN=$'\e[33m'; C_ERR=$'\e[31m'; C_B=$'\e[1m'; C_0=$'\e[0m'
@@ -332,6 +342,287 @@ remove_client() {
   ok "'$name' profili kaldırıldı (bu profille artık bağlanılamaz)"
 }
 
+# ------------------------------------------------------------------ shared server mode
+
+write_api() {
+  mkdir -p "$API_DIR"
+  cat > "$API_DIR/zeppelin-public-api.py" <<'PYEOF'
+#!/usr/bin/env python3
+"""Zeppelin VPN shared-server registration API.
+
+Lets the app connect to your server with one tap: the phone creates its own
+WireGuard key pair, sends only the PUBLIC key here, and gets back a tunnel
+address. Private keys never leave the phones. The app pins the server's
+WireGuard public key, so a tampered HTTP response cannot redirect the tunnel.
+
+Started by systemd (zeppelin-public-api.service), installed by
+"zeppelin-oracle-setup.sh public-on". Standard library only.
+"""
+import ipaddress
+import json
+import os
+import re
+import subprocess
+import sys
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+WG_IF = os.environ.get("ZEPPELIN_WG_IF", "wg0")
+LISTEN_PORT = int(os.environ.get("ZEPPELIN_API_PORT", "51821"))
+STATE_FILE = os.environ.get("ZEPPELIN_PUBLIC_STATE", "/etc/wireguard/zeppelin-public.json")
+POOL = ipaddress.ip_network(os.environ.get("ZEPPELIN_PUBLIC_POOL", "10.67.0.0/16"))
+MAX_PEERS = int(os.environ.get("ZEPPELIN_MAX_PEERS", "150"))
+EXPIRE_DAYS = float(os.environ.get("ZEPPELIN_EXPIRE_DAYS", "14"))
+RATE_PER_HOUR = int(os.environ.get("ZEPPELIN_RATE_PER_HOUR", "10"))
+SERVER_NAME = os.environ.get("ZEPPELIN_SERVER_NAME", "Zeppelin")
+ENDPOINT = os.environ.get("ZEPPELIN_ENDPOINT", "")
+SERVER_PUBLIC_KEY = os.environ.get("ZEPPELIN_SERVER_PUBLIC_KEY", "")
+DNS = ["1.1.1.1", "1.0.0.1"]
+MTU = 1280
+KEEPALIVE = 25
+
+KEY_RE = re.compile(r"^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw480]=$")
+lock = threading.Lock()
+rate = {}  # source ip -> [timestamps]
+state = {"peers": {}}  # public key -> {"address": "10.67.0.2/32", "created": ts, "seen": ts}
+
+
+def wg(*args):
+    return subprocess.run(["wg", *args], check=True, capture_output=True, text=True).stdout
+
+
+def save_state():
+    tmp = STATE_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(state, f)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, STATE_FILE)
+
+
+def load_state():
+    global state
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE) as f:
+            state = json.load(f)
+        state.setdefault("peers", {})
+    for key, peer in state["peers"].items():
+        wg("set", WG_IF, "peer", key, "allowed-ips", peer["address"])
+
+
+def next_address():
+    used = {p["address"] for p in state["peers"].values()}
+    server_ip = POOL.network_address + 1  # the server's own address on wg0
+    for host in POOL.hosts():
+        if host == server_ip:
+            continue
+        candidate = f"{host}/32"
+        if candidate not in used:
+            return candidate
+    return None
+
+
+def allowed_by_rate(source):
+    now = time.time()
+    recent = [t for t in rate.get(source, []) if now - t < 3600]
+    rate[source] = recent
+    if len(recent) >= RATE_PER_HOUR:
+        return False
+    recent.append(now)
+    return True
+
+
+def register(public_key, source):
+    if not KEY_RE.match(public_key or ""):
+        return 400, {"error": "BAD_KEY"}
+    with lock:
+        now = int(time.time())
+        peer = state["peers"].get(public_key)
+        if peer is None:
+            if len(state["peers"]) >= MAX_PEERS:
+                return 503, {"error": "SERVER_FULL"}
+            if not allowed_by_rate(source):
+                return 429, {"error": "RATE_LIMITED"}
+            address = next_address()
+            if address is None:
+                return 503, {"error": "SERVER_FULL"}
+            peer = {"address": address, "created": now, "seen": now}
+            state["peers"][public_key] = peer
+        peer["seen"] = now
+        wg("set", WG_IF, "peer", public_key, "allowed-ips", peer["address"])
+        save_state()
+        return 200, {
+            "address": peer["address"],
+            "serverPublicKey": SERVER_PUBLIC_KEY,
+            "endpoint": ENDPOINT,
+            "dns": DNS,
+            "mtu": MTU,
+            "keepalive": KEEPALIVE,
+        }
+
+
+def cleanup_once():
+    """Removes peers that neither registered nor handshaked for EXPIRE_DAYS."""
+    limit = time.time() - EXPIRE_DAYS * 86400
+    handshakes = {}
+    try:
+        for line in wg("show", WG_IF, "latest-handshakes").splitlines():
+            parts = line.split()
+            if len(parts) == 2:
+                handshakes[parts[0]] = int(parts[1])
+    except Exception:
+        return
+    with lock:
+        stale = [k for k, p in state["peers"].items() if p["seen"] < limit and handshakes.get(k, 0) < limit]
+        for key in stale:
+            try:
+                wg("set", WG_IF, "peer", key, "remove")
+            except Exception:
+                pass
+            del state["peers"][key]
+        if stale:
+            save_state()
+
+
+def cleanup_loop():
+    while True:
+        time.sleep(3600)
+        cleanup_once()
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "Zeppelin"
+    sys_version = ""
+
+    def log_message(self, fmt, *args):  # no request logs: the API keeps no record of who connects
+        pass
+
+    def reply(self, code, body):
+        data = json.dumps(body).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        if self.path == "/v1/info":
+            with lock:
+                count = len(state["peers"])
+            self.reply(200, {"name": SERVER_NAME, "serverPublicKey": SERVER_PUBLIC_KEY, "endpoint": ENDPOINT,
+                             "users": count, "maxUsers": MAX_PEERS})
+        else:
+            self.reply(404, {"error": "NOT_FOUND"})
+
+    def do_POST(self):
+        if self.path != "/v1/register":
+            self.reply(404, {"error": "NOT_FOUND"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if length <= 0 or length > 4096:
+                self.reply(400, {"error": "BAD_REQUEST"})
+                return
+            body = json.loads(self.rfile.read(length))
+            code, payload = register(str(body.get("publicKey", "")), self.client_address[0])
+        except Exception:
+            code, payload = 500, {"error": "SERVER_ERROR"}
+        self.reply(code, payload)
+
+
+def main():
+    if not SERVER_PUBLIC_KEY or not ENDPOINT:
+        print("ZEPPELIN_SERVER_PUBLIC_KEY and ZEPPELIN_ENDPOINT are required", file=sys.stderr)
+        sys.exit(2)
+    load_state()
+    threading.Thread(target=cleanup_loop, daemon=True).start()
+    httpd = ThreadingHTTPServer(("0.0.0.0", LISTEN_PORT), Handler)
+    httpd.timeout = 10
+    print(f"Zeppelin API listening on :{LISTEN_PORT}", flush=True)
+    httpd.serve_forever()
+
+
+if __name__ == "__main__":
+    main()
+PYEOF
+  chmod 700 "$API_DIR/zeppelin-public-api.py"
+}
+
+public_on() {
+  local name="${1:-Oracle}" country="${2:-}"
+  [ -f "$WG_CONF" ] || die "Önce kurulumu yap: sudo bash $0"
+  [[ "$name" =~ ^[A-Za-z0-9\ ._-]{1,30}$ ]] || die "Sunucu adı yalnızca harf, rakam, boşluk, nokta, - ve _ içerebilir (en fazla 30)."
+  [[ -z "$country" || "$country" =~ ^[A-Za-z]{2}$ ]] || die "Ülke kodu iki harf olmalı (ör. DE)."
+  command -v python3 >/dev/null 2>&1 || apt-get -o DPkg::Lock::Timeout=600 install -y python3
+  step "Paylaşımlı sunucu açılıyor"
+  if ! grep -qF "$PUBLIC_ADDR" "$WG_CONF"; then
+    sed -i "s|^Address = $NET4.1/24\$|Address = $NET4.1/24, $PUBLIC_ADDR|" "$WG_CONF"
+    grep -qF "$PUBLIC_ADDR" "$WG_CONF" || die "$WG_CONF içinde Address satırı beklenen biçimde değil."
+  fi
+  ensure_rule nat POSTROUTING -s "$PUBLIC_NET" -o "$IFACE" -m comment --comment "$TAG" -j MASQUERADE
+  ensure_rule filter INPUT -p tcp --dport "$API_PORT" -m comment --comment "$TAG" -j ACCEPT
+  netfilter-persistent save >/dev/null 2>&1 || die "Kurallar kaydedilemedi."
+  write_api
+  umask 077
+  cat > "$UNIT_DIR/$API_UNIT" <<UNITEOF
+[Unit]
+Description=Zeppelin VPN shared server registration API
+After=wg-quick@$WG_IF.service
+PartOf=wg-quick@$WG_IF.service
+
+[Service]
+Environment=ZEPPELIN_WG_IF=$WG_IF
+Environment=ZEPPELIN_API_PORT=$API_PORT
+Environment=ZEPPELIN_PUBLIC_STATE=$WG_DIR/zeppelin-public.json
+Environment="ZEPPELIN_SERVER_NAME=$name"
+Environment=ZEPPELIN_ENDPOINT=$PUBLIC_IP:$PORT
+Environment=ZEPPELIN_SERVER_PUBLIC_KEY=$(cat "$WG_DIR/server.pub")
+ExecStart=/usr/bin/python3 $API_DIR/zeppelin-public-api.py
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=wg-quick@$WG_IF.service
+UNITEOF
+  printf 'NAME=%q\nCOUNTRY=%q\n' "$name" "$country" > "$WG_DIR/zeppelin-public.env"
+  systemctl daemon-reload
+  systemctl restart "wg-quick@$WG_IF" || die "WireGuard yeniden başlatılamadı."
+  systemctl enable --quiet "$API_UNIT" || die "$API_UNIT etkinleştirilemedi."
+  systemctl restart "$API_UNIT" || die "$API_UNIT başlatılamadı. Ayrıntı: journalctl -u $API_UNIT"
+  ok "Paylaşımlı sunucu açık (TCP $API_PORT kayıt servisi, en fazla 150 cihaz, 14 gün kullanılmayan cihazlar silinir)"
+  public_info
+}
+
+public_info() {
+  local name country
+  [ -f "$WG_DIR/zeppelin-public.env" ] || die "Paylaşımlı sunucu açık değil: sudo bash $0 public-on \"Ad\" DE"
+  NAME=""; COUNTRY=""
+  # shellcheck disable=SC1091
+  . "$WG_DIR/zeppelin-public.env"
+  name="${NAME:-Oracle}"; country="${COUNTRY:-}"
+  say ""
+  say "${C_B}Uygulamaya eklenecek sunucu satırı${C_0} (src/content/servers.ts içindeki listeye yapıştır):"
+  say ""
+  printf "  { id: '%s', name: '%s', country: '%s', apiUrl: 'http://%s:%s', serverPublicKey: '%s' },\n" \
+    "$(printf '%s' "$PUBLIC_IP" | tr '.' '-')" "$name" "$country" "$PUBLIC_IP" "$API_PORT" "$(cat "$WG_DIR/server.pub")"
+  say ""
+  say "${C_B}Oracle konsolunda:${C_0} Security List'e TCP $API_PORT giriş kuralı ekle (UDP $PORT kuralı zaten olmalı)."
+}
+
+public_off() {
+  step "Paylaşımlı sunucu kapatılıyor"
+  systemctl disable --now --quiet "$API_UNIT" 2>/dev/null || true
+  if iptables -C INPUT -p tcp --dport "$API_PORT" -m comment --comment "$TAG" -j ACCEPT 2>/dev/null; then
+    iptables -D INPUT -p tcp --dport "$API_PORT" -m comment --comment "$TAG" -j ACCEPT
+    netfilter-persistent save >/dev/null 2>&1 || true
+  fi
+  rm -f "$WG_DIR/zeppelin-public.env"
+  systemctl restart "wg-quick@$WG_IF" || true
+  ok "Paylaşımlı sunucu kapalı. Kendi profillerin çalışmaya devam eder."
+}
+
 status_check() {
   local fails=0 fwd cur
   step "Durum kontrolü"
@@ -349,6 +640,9 @@ status_check() {
     ok "Genel IP: $PUBLIC_IP, port: $PORT"
   fi
   list_clients
+  if [ -f "$WG_DIR/zeppelin-public.env" ]; then
+    if systemctl is-active --quiet "$API_UNIT"; then ok "Paylaşımlı sunucu açık (TCP $API_PORT)"; else bad "Paylaşımlı sunucu servisi çalışmıyor -> journalctl -u $API_UNIT"; fails=$((fails + 1)); fi
+  fi
   say ""
   say "Sunucunun İÇİNDEN kontrol edilemeyen tek şey Oracle'ın bulut güvenlik duvarıdır:"
   say "  Oracle Console -> Networking -> Virtual cloud networks -> (VCN) -> Security Lists -> Default Security List"
@@ -406,7 +700,10 @@ main() {
       load_state; [ -f "$WG_CONF" ] || die "Önce kurulumu yap: sudo bash $0"
       IFACE="$(detect_iface)"; save_state
       enable_forwarding; firewall_rules; start_service; status_check ;;
-    -h|--help|help) sed -n '2,11p' "$0" ;;
+    public-on) load_state; public_on "${2:-Oracle}" "${3:-}" ;;
+    public-info) load_state; public_info ;;
+    public-off) load_state; public_off ;;
+    -h|--help|help) sed -n '2,15p' "$0" ;;
     *) die "Bilinmeyen komut: $cmd (yardım: sudo bash $0 help)" ;;
   esac
 }

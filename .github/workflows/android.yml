@@ -123,7 +123,7 @@ jobs:
       # The Releases page always shows exactly one version: the newest signed APK from main.
       # Every older release (including old debug builds) is deleted together with its tag.
       - name: Publish the APK as the only release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

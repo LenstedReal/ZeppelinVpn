@@ -4,14 +4,14 @@ plugins {
 }
 
 group = 'com.lenstedreal.zeppelinvpn'
-version = '2.3.0'
+version = '2.3.1'
 
 android {
   namespace "expo.modules.zeppelinvpn"
 
   defaultConfig {
     versionCode 1
-    versionName "2.3.0"
+    versionName "2.3.1"
     // Keeps the WireGuard JNI classes when the app is built with R8 (on by default since Expo SDK 58).
     consumerProguardFiles "consumer-rules.pro"
   }

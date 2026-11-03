@@ -57,3 +57,8 @@ Paket kimliği aynı kaldı: `com.lenstedreal.zeppelinvpn`. Yeni sürüm eski Ko
 - **Gizlilik:** Ayarlar → Gizlilik → "Sunucu listesini güncelle" ile GitHub'dan liste indirme kapatılabilir. Gizlilik politikası topluluk sunucularını ve liste indirmeyi anlatıyor.
 - **Düzeltmeler:** Bildirimdeki hız artık uygulamadaki gibi Mbps (önceden MB/s gösteriyordu, 8 kat farklı görünüyordu). Uzun süreler gün olarak yazılıyor. Sunucuda IP başına saatlik yeni kayıt sınırı 10'dan 30'a çıktı (mobil operatörler çok kullanıcıyı tek IP arkasına koyuyor).
 - **Sunucu betiği:** `public-on` artık ülke kodu istiyor ve sunucu satırını JSON olarak, öneri bağlantısıyla birlikte yazıyor.
+
+## 2.3.1
+
+- **İletişim:** contact.zeppelinvpn@proton.me (gizlilik politikası, README, Ayarlar → Hakkında).
+- **Sunucu betiği:** öneri bağlantısını tarayıcıda açma uyarısı; GitHub uygulamasında form boş gelirse ne yapılacağı. LenstedReal'in kendi sunucuları için yanlış "Topluluk" ifadesi düzeltildi.

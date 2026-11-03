@@ -92,6 +92,11 @@ test('registration API: addresses, idempotency, validation, limits', async () =>
     assert.ok(wgLog.includes(`set wg0 peer ${a} allowed-ips 10.67.0.2/32`));
     const state = JSON.parse(readFileSync(join(api.dir, 'state.json'), 'utf8'));
     assert.equal(Object.keys(state.peers).length, 3);
+    // Privacy: only the day is stored, never the time of day.
+    for (const peer of Object.values(state.peers) as Array<{ created: number; seen: number }>) {
+      assert.equal(peer.created % 86400, 0);
+      assert.equal(peer.seen % 86400, 0);
+    }
   } finally {
     api.stop();
   }

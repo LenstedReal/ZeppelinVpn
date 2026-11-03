@@ -2,58 +2,80 @@
 
 Son güncelleme / Last updated: 2026-11-03
 
+Geliştirici / Developer: LenstedReal
+
 İletişim / Contact: **[buraya iletişim e-postanı yaz / your contact e-mail]**
 
 ---
 
 ## Türkçe
 
-Zeppelin VPN, kendi WireGuard sunucuna (örneğin kendi Oracle Cloud sunucuna) bağlanmanı sağlayan bir istemcidir. Geliştirici herhangi bir VPN sunucusu işletmez ve senden hiçbir veri almaz.
+Zeppelin VPN, LenstedReal tarafından geliştirilen bir WireGuard VPN uygulamasıdır. İki şekilde kullanılır: LenstedReal’in işlettiği hazır sunuculara bağlanırsın ya da kendi kurduğun sunucunun profilini eklersin.
+
+**Hazır sunucular (ör. Frankfurt, Oracle Cloud Almanya)**
+- İlk bağlantıda telefon kendi WireGuard anahtar çiftini üretir. Gizli anahtar telefondan hiç çıkmaz; sunucuya yalnızca açık anahtar gönderilir.
+- Sunucuda saklananlar: açık anahtar, sana verilen tünel adresi (ör. 10.67.0.5), kaydın oluşturulduğu ve son kullanıldığı gün (saat yok). 14 gün kullanılmayan kayıtlar kendiliğinden silinir.
+- Saklanmayanlar: trafik kaydı, ziyaret ettiğin siteler, DNS sorguların, gerçek IP adresin. Kayıt servisi istek kaydı tutmaz.
+- Sunucu çalışırken bazı bilgiler yalnızca bellekte, geçici olarak durur ve diske yazılmaz: WireGuard’ın bağlantıyı sürdürmek için tuttuğu son IP adresin, kötüye kullanımı önlemek için bir saatlik kayıt deneme sayacı. Sunucunun sistem günlükleri de yalnızca bellekte tutulur ve en geç 1 günde silinir.
+- Trafiğin telefonla sunucu arasında WireGuard ile şifrelidir. HTTPS kullanan sitelerin içeriği sunucuda da okunamaz. Sunucuyu işleten (LenstedReal) ve barındırma firması (Oracle) teknik olarak bağlantıların üst verisini (hangi IP’ye, ne kadar veri) görebilir; LenstedReal bunu kaydetmez.
+- Kayıt isteği şifresiz HTTP ile gider ama içinde gizli bilgi yoktur (yalnızca açık anahtar). Sunucunun anahtarı uygulamaya gömülüdür; başka bir sunucu araya girerse uygulama bağlanmaz.
+
+**Kendi sunucun**
+- Kendi kurduğun sunucuya bağlanırsan trafik yalnızca senin sunucuna gider; LenstedReal hiçbir şey görmez ve almaz.
 
 **Telefonda saklananlar**
-
-- WireGuard profillerin: Android Keystore anahtarıyla şifreli olarak yalnızca bu telefonda saklanır. Uygulama yedeklemesi kapalıdır; profiller buluta yedeklenmez ve geliştiriciye gönderilmez.
+- Profillerin ve hazır sunucu anahtarların: Android Keystore anahtarıyla şifreli, yalnızca bu telefonda. Uygulama yedeklemesi kapalıdır; buluta yedeklenmez.
 - Ayarların (dil, DNS, MTU vb.): yalnızca bu telefonda.
 
-**Ağ trafiği**
+**Diğer**
+- DNS sorguları tünel içinden, seçtiğin DNS sunucusuna gider.
+- Çıkış IP kontrolü (isteğe bağlı, Ayarlar’dan kapatılabilir): bağlıyken https://1.1.1.1/cdn-cgi/trace adresine istek atılır; Cloudflare bu istekte çıkış IP’ni görür. Sonuç yalnızca ekranda gösterilir.
+- Durum bildirimi yalnızca telefonunda oluşturulur. Kilit ekranında ayrıntı göstermez, yalnızca “VPN açık” yazar.
+- Uygulamada reklam, analiz, izleme veya çökme raporlama kütüphanesi yok. Hesap yok.
 
-- Bağlıyken trafiğin şifreli olarak profilde yazan sunucuya gider. O sunucuyu işleten (kendi sunucunsa sen) trafiğin üst verisini bir internet servis sağlayıcısının görebildiği kadar görebilir.
-- DNS sorguları, profildeki ya da Ayarlar'da seçtiğin DNS sunucusuna tünel içinden gider.
-- Hazır sunucular: bir hazır sunucuya ilk bağlandığında telefon kendi WireGuard anahtar çiftini üretir ve sunucuya yalnızca açık anahtarı gönderir. Sunucu bu açık anahtarı, verdiği tünel adresini ve son kullanım zamanını saklar; 14 gün kullanılmayan kayıtları siler. Trafik kaydı tutulmaz.
-- Çıkış IP kontrolü (isteğe bağlı, Ayarlar'dan kapatılabilir): bağlıyken `https://1.1.1.1/cdn-cgi/trace` adresine istek atılır. Cloudflare bu istekte çıkış IP adresini görür ([Cloudflare gizlilik politikası](https://www.cloudflare.com/privacypolicy/)). Sonuç yalnızca ekranda gösterilir, saklanmaz.
+**İzinler**
+- VPN (VpnService): tüneli kurmak için.
+- Bildirim: canlı durum bildirimi için (isteğe bağlı).
+- İnternet ve ağ durumu: bağlanmak ve ağ değişimlerini izlemek için.
+- Açılışta çalışma: yalnızca “Telefon açılınca bağlan” açıksa.
 
-**Uygulamada olmayanlar:** reklam, analiz, izleme veya çökme raporlama kütüphanesi; kullanıcı hesabı.
+**Verilerini silmek**
+- Ayarlar → Tüm verileri sil ya da uygulamayı kaldır. Hazır sunucudaki kaydın 14 gün kullanılmayınca kendiliğinden silinir.
 
-**İzinler:** VPN (VpnService) tüneli kurmak için; internet ve ağ durumu bağlanmak ve ağ değişimlerini izlemek için; açılışta çalışma yalnızca "Telefon açılınca bağlan" açıksa.
-
-**Çocuklar:** Uygulama 18 yaş altına yönelik değildir.
-
-**Verilerini silmek:** Ayarlar → Tüm verileri sil, ya da uygulamayı kaldır. Geliştiricide senin hakkında silinecek bir veri yoktur.
-
-**Değişiklikler:** Bu politika değişirse bu sayfa güncellenir.
+Uygulama 18 yaş altına yönelik değildir. Bu politika değişirse bu metin güncellenir.
 
 ## English
 
-Zeppelin VPN is a client that connects you to your own WireGuard server (for example your own Oracle Cloud server). The developer runs no VPN servers and receives no data from you.
+Zeppelin VPN is a WireGuard VPN app developed by LenstedReal. You can use it in two ways: connect to ready servers run by LenstedReal, or add the profile of a server you set up yourself.
 
-**Stored on your phone**
+**Ready servers (e.g. Frankfurt, Oracle Cloud Germany)**
+- On the first connection the phone creates its own WireGuard key pair. The private key never leaves the phone; only the public key is sent to the server.
+- Stored on the server: the public key, the tunnel address you were given (e.g. 10.67.0.5), and the day the record was created and last used (no time of day). Records unused for 14 days are deleted automatically.
+- Not stored: traffic logs, the sites you visit, your DNS queries, your real IP address. The registration service keeps no request logs.
+- While the server runs, some data exists only temporarily in memory and is never written to disk: the last IP address WireGuard needs to keep the connection going, and a one-hour counter of registration attempts to prevent abuse. The server’s system logs are also kept only in memory and deleted within 1 day.
+- Your traffic is encrypted with WireGuard between the phone and the server. The content of HTTPS sites cannot be read on the server either. The operator (LenstedReal) and the hosting company (Oracle) can technically see connection metadata (which IP, how much data); LenstedReal does not record it.
+- The registration request uses plain HTTP but contains nothing secret (only the public key). The server’s key is built into the app; if another server gets in between, the app refuses to connect.
 
-- Your WireGuard profiles: encrypted with an Android Keystore key and kept only on this phone. App backup is disabled; profiles are not backed up to the cloud and are never sent to the developer.
+**Your own server**
+- If you connect to a server you set up yourself, your traffic goes only to your server; LenstedReal sees and receives nothing.
+
+**Stored on this phone**
+- Your profiles and ready-server keys: encrypted with an Android Keystore key and kept only on this phone. App backup is disabled; nothing is backed up to the cloud.
 - Your settings (language, DNS, MTU, etc.): only on this phone.
 
-**Network traffic**
+**Other**
+- DNS queries go through the tunnel to the DNS server you chose.
+- Exit IP check (optional, can be turned off in Settings): while connected the app requests https://1.1.1.1/cdn-cgi/trace; Cloudflare sees your exit IP in that request. The result is only shown on screen.
+- The status notification is created only on your phone. On the lock screen it shows no details, only “VPN is on”.
+- No advertising, analytics, tracking or crash-reporting libraries. No account.
 
-- While connected, your traffic goes encrypted to the server in your profile. Whoever runs that server (you, if it is your own) can see traffic metadata the way an internet provider can.
-- DNS queries go through the tunnel to the DNS server from your profile or Settings.
-- Ready servers: the first time you connect to a ready server, the phone creates its own WireGuard key pair and sends only the public key to the server. The server stores that public key, the tunnel address it gave you and when it was last used, and deletes records unused for 14 days. No traffic logs are kept.
-- Exit IP check (optional, can be turned off in Settings): while connected the app requests `https://1.1.1.1/cdn-cgi/trace`. Cloudflare sees your exit IP address in that request ([Cloudflare privacy policy](https://www.cloudflare.com/privacypolicy/)). The result is only shown on screen and not stored.
+**Permissions**
+- VPN (VpnService): to create the tunnel.
+- Notifications: for the live status notification (optional).
+- Internet and network state: to connect and follow network changes.
+- Run at startup: only if “Connect when the phone starts” is on.
 
-**Not in the app:** advertising, analytics, tracking or crash-reporting libraries; user accounts.
+**Deleting your data**
+- Settings → Delete all data, or uninstall the app. Your record on a ready server is deleted automatically after 14 days without use.
 
-**Permissions:** VPN (VpnService) to create the tunnel; internet and network state to connect and follow network changes; run at startup only if "Connect when the phone starts" is on.
-
-**Children:** The app is not directed at children under 18.
-
-**Deleting your data:** Settings → Delete all data, or uninstall the app. The developer holds no data about you to delete.
-
-**Changes:** If this policy changes, this page will be updated.
+The app is not directed at children under 18. If this policy changes, this text will be updated.

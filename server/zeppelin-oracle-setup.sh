@@ -44,6 +44,8 @@ PUBLIC_NET="10.67.0.0/16"
 PUBLIC_ADDR="10.67.0.1/16"
 API_DIR="${ZEPPELIN_API_DIR:-/usr/local/lib/zeppelin}"
 UNIT_DIR="${ZEPPELIN_UNIT_DIR:-/etc/systemd/system}"
+JOURNALD_DIR="${ZEPPELIN_JOURNALD_DIR:-/etc/systemd/journald.conf.d}"
+LOG_DIR="${ZEPPELIN_LOG_DIR:-/var/log}"
 API_UNIT="zeppelin-public-api.service"
 
 if [ -t 1 ]; then
@@ -407,7 +409,16 @@ def load_state():
             state = json.load(f)
         state.setdefault("peers", {})
     for key, peer in state["peers"].items():
+        # Privacy: only the day is kept, never the time of day (also for older records).
+        peer["created"] = day(peer.get("created", time.time()))
+        peer["seen"] = day(peer.get("seen", time.time()))
         wg("set", WG_IF, "peer", key, "allowed-ips", peer["address"])
+    save_state()
+
+
+def day(ts):
+    """Start of the UTC day: records keep the date only."""
+    return int(ts) // 86400 * 86400
 
 
 def next_address():
@@ -436,7 +447,7 @@ def register(public_key, source):
     if not KEY_RE.match(public_key or ""):
         return 400, {"error": "BAD_KEY"}
     with lock:
-        now = int(time.time())
+        now = day(time.time())
         peer = state["peers"].get(public_key)
         if peer is None:
             if len(state["peers"]) >= MAX_PEERS:
@@ -587,12 +598,36 @@ PrivateTmp=yes
 WantedBy=wg-quick@$WG_IF.service
 UNITEOF
   printf 'NAME=%q\nCOUNTRY=%q\n' "$name" "$country" > "$WG_DIR/zeppelin-public.env"
+  privacy_logs
   systemctl daemon-reload
   systemctl restart "wg-quick@$WG_IF" || die "WireGuard yeniden başlatılamadı."
   systemctl enable --quiet "$API_UNIT" || die "$API_UNIT etkinleştirilemedi."
   systemctl restart "$API_UNIT" || die "$API_UNIT başlatılamadı. Ayrıntı: journalctl -u $API_UNIT"
   ok "Paylaşımlı sunucu açık (TCP $API_PORT kayıt servisi, en fazla 150 cihaz, 14 gün kullanılmayan cihazlar silinir)"
   public_info
+}
+
+# Privacy for a shared server: system logs stay in memory only (gone within a day
+# and at every reboot), rsyslog stops writing /var/log/syslog and auth.log, and the
+# old on-disk logs that may contain users' IP addresses are removed.
+privacy_logs() {
+  step "Gizlilik: sistem günlükleri yalnızca bellekte"
+  mkdir -p "$JOURNALD_DIR"
+  cat > "$JOURNALD_DIR/zeppelin-privacy.conf" <<'JOURNALEOF'
+# Written by zeppelin-oracle-setup.sh (public-on): logs only in RAM, kept at most 1 day.
+[Journal]
+Storage=volatile
+RuntimeMaxUse=32M
+MaxRetentionSec=1day
+ForwardToSyslog=no
+JOURNALEOF
+  systemctl restart systemd-journald >/dev/null 2>&1 || true
+  if systemctl is-enabled --quiet rsyslog 2>/dev/null || systemctl is-active --quiet rsyslog 2>/dev/null; then
+    systemctl disable --now rsyslog >/dev/null 2>&1 || true
+  fi
+  rm -rf "${LOG_DIR:?}/journal"
+  rm -f "$LOG_DIR"/syslog* "$LOG_DIR"/auth.log* "$LOG_DIR"/kern.log*
+  ok "Günlükler artık diske yazılmıyor (en fazla 1 gün bellekte); eski syslog/auth.log kayıtları silindi."
 }
 
 public_info() {

@@ -3,6 +3,13 @@ name: Android APK + AAB
 on:
   push:
     branches: [main, expo]
+    # Server list, proposal form and docs do not change the APK.
+    paths-ignore:
+      - servers.json
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/workflows/community-server.yml'
+      - 'docs/**'
+      - '**.md'
   pull_request:
   workflow_dispatch:
 

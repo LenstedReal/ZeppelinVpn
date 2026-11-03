@@ -1,0 +1,43 @@
+name: Sunucu önerisi
+description: Kendi Zeppelin VPN sunucunu uygulamadaki hazır sunucu listesine öner.
+title: "Sunucu önerisi: "
+labels: ["sunucu-onerisi"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sunucunda önce `sudo bash zeppelin-oracle-setup.sh public-on "Şehir" ÜLKE` komutunu çalıştır.
+        Komutun yazdığı bağlantıyı açtıysan aşağıdaki alan zaten doludur; değilse
+        `sudo bash zeppelin-oracle-setup.sh public-info` çıktısındaki `{ ... }` satırını yapıştır.
+
+        Gönderdikten sonra bir bot sunucunun çalıştığını ve anahtarının eşleştiğini kontrol eder.
+        LenstedReal onaylarsa sunucun uygulamada **Topluluk** etiketiyle herkese görünür.
+  - type: textarea
+    id: sunucu
+    attributes:
+      label: Sunucu satırı
+      description: public-info komutunun yazdığı tek satır.
+      placeholder: '{"id":"1-2-3-4","name":"Amsterdam","country":"NL","apiUrl":"http://1.2.3.4:51821","serverPublicKey":"..."}'
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: not
+    attributes:
+      label: Eklemek istediğin not (isteğe bağlı)
+      description: Örneğin sunucunun hızı ya da ne kadar süre açık tutacağın.
+    validations:
+      required: false
+  - type: checkboxes
+    id: sozler
+    attributes:
+      label: Taahhütler
+      options:
+        - label: Bu sunucuyu ben işletiyorum ve ondan ben sorumluyum.
+          required: true
+        - label: Kullanıcıların trafiğini kaydetmeyeceğim, izlemeyeceğim ve satmayacağım.
+          required: true
+        - label: Sunucunun kurulum betiğinin sağladığı ayarlarla (istek günlüğü yok) çalıştığını kabul ediyorum.
+          required: true
+        - label: LenstedReal’in sunucumu istediği zaman listeden kaldırabileceğini kabul ediyorum.
+          required: true

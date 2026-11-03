@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "servers": [
+    {"id":"158-101-173-231","name":"Frankfurt","country":"DE","apiUrl":"http://158.101.173.231:51821","serverPublicKey":"5dyfznfuc1D1BUFkDPmeK7THkCPXtdTpGHsRD+eHYgI=","operator":"LenstedReal"}
+  ]
+}

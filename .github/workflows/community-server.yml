@@ -1,0 +1,60 @@
+name: Topluluk sunucuları
+
+# Proposals come in as issues from .github/ISSUE_TEMPLATE/sunucu-oner.yml.
+# The bot checks each proposal; when the repository owner adds the "onay" label,
+# the server is added to servers.json and every app shows it on its next start.
+# Pushes made here use GITHUB_TOKEN, so they do not start a new APK build.
+on:
+  issues:
+    types: [opened, edited, labeled]
+  push:
+    branches: [main]
+    paths: [servers.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: community-servers
+  cancel-in-progress: false
+
+jobs:
+  proposal:
+    if: github.event_name == 'issues' && startsWith(github.event.issue.title, 'Sunucu önerisi')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Check the proposal (and add it when approved)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          EVENT_ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          SENDER: ${{ github.event.sender.login }}
+          OWNER: ${{ github.repository_owner }}
+        run: node --experimental-strip-types scripts/community-server.ts
+
+  validate:
+    if: github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: servers.json must be valid
+        env:
+          MODE: validate
+        run: node --experimental-strip-types scripts/community-server.ts

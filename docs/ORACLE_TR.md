@@ -94,7 +94,22 @@ Termux'ta ekrana uzun bas → **Select** → `# Name:` satırından `PersistentK
 
 **Bağlantı → BAĞLAN** → Android'in VPN iznini onayla. "Korunuyorsun" yazmalı, **Çıkış IP** Oracle sunucunun Public IP'si olmalı.
 
-## 10. Tam koruma (önerilir)
+## 10. Sunucunu uygulamada "hazır sunucu" yap (isteğe bağlı)
+
+Uygulamayı kuran herkesin profil uğraşmadan, listeden seçip tek dokunuşla bağlanması için:
+
+```bash
+sudo bash zeppelin-oracle-setup.sh public-on "Frankfurt" DE
+```
+
+1. Oracle Security List'e **TCP 51821** giriş kuralı ekle (Source 0.0.0.0/0). Kayıt servisi bu portta çalışır.
+2. Komutun yazdığı `{ id: ..., apiUrl: ..., serverPublicKey: ... }` satırını depodaki `src/content/servers.ts` listesine ekle, commit'le ve push'la. Yeni APK'da sunucu "Hazır sunucular" altında görünür.
+
+Nasıl çalışır: her telefon kendi WireGuard anahtar çiftini üretir ve sunucuya yalnızca açık anahtarı gönderir; sunucu ona 10.67.x.x adresinden bir tünel adresi verir. Sunucunun anahtarı uygulamaya sabitlendiği için sahte bir sunucu araya giremez. En fazla 150 cihaz, aynı IP'den saatte en fazla 10 yeni kayıt, 14 gün kullanılmayan cihazlar otomatik silinir. Kendi `telefon` profilin bundan etkilenmez.
+
+Bilmen gerekenler: Bu sunucuyu kullanan herkes internete **senin sunucunun IP'siyle** çıkar; VPN başka bir IP üretmez. Bu yüzden listeyi yalnızca güvendiğin kişilerin kullandığı bir APK'da paylaş. Kapatmak için `sudo bash zeppelin-oracle-setup.sh public-off`, satırı tekrar görmek için `public-info`.
+
+## 11. Tam koruma (önerilir)
 
 Android **Ayarlar → Ağ ve internet → VPN → Zeppelin VPN yanındaki ⚙ → Her zaman açık VPN** ve **VPN olmadan bağlantıları engelle**. Telefon açılırken ya da uygulama güncellenirken bile trafik sızmaz.
 
@@ -108,6 +123,9 @@ Android **Ayarlar → Ağ ve internet → VPN → Zeppelin VPN yanındaki ⚙ �
 | `sudo bash zeppelin-oracle-setup.sh list` | Profiller ve son el sıkışmaları |
 | `sudo bash zeppelin-oracle-setup.sh remove tablet` | Profili iptal et |
 | `sudo bash zeppelin-oracle-setup.sh repair` | Yönlendirme ve güvenlik duvarını onar, WireGuard'ı yeniden başlat |
+| `sudo bash zeppelin-oracle-setup.sh public-on "Ad" DE` | Hazır sunucu modunu aç |
+| `sudo bash zeppelin-oracle-setup.sh public-info` | Uygulamaya eklenecek sunucu satırını göster |
+| `sudo bash zeppelin-oracle-setup.sh public-off` | Hazır sunucu modunu kapat |
 
 ## Bilmen gerekenler
 

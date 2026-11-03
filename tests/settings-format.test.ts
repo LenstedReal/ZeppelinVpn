@@ -40,6 +40,7 @@ test('formatting', () => {
   assert.equal(formatRate(1250, 'en'), '10 Kbps');
   assert.equal(formatDuration(3725, 'tr'), '1 sa 02 dk');
   assert.equal(formatDuration(65, 'en'), '1 m 05 s');
+  assert.equal(formatDuration(3 * 86400 + 7200, 'tr'), '3 gün 2 sa');
   assert.equal(formatAgo(-1, 'tr'), 'hiç');
   assert.equal(formatAgo(30, 'tr'), '30 sn önce');
   assert.equal(flagEmoji('TR'), '\u{1F1F9}\u{1F1F7}');

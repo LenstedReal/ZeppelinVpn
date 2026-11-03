@@ -29,7 +29,8 @@ export function formatDuration(totalSeconds: number, lang: Lang): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  const L = lang === 'tr' ? { h: 'sa', m: 'dk', s: 'sn' } : { h: 'h', m: 'm', s: 's' };
+  const L = lang === 'tr' ? { d: 'gün', h: 'sa', m: 'dk', s: 'sn' } : { d: 'd', h: 'h', m: 'm', s: 's' };
+  if (h >= 24) return `${Math.floor(h / 24)} ${L.d} ${h % 24} ${L.h}`;
   if (h > 0) return `${h} ${L.h} ${String(m).padStart(2, '0')} ${L.m}`;
   if (m > 0) return `${m} ${L.m} ${String(sec).padStart(2, '0')} ${L.s}`;
   return `${sec} ${L.s}`;

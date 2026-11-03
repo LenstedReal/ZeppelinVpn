@@ -173,13 +173,14 @@ object StatusNotifier {
     channelLang = lang
   }
 
+  /** Same unit and rounding as formatRate in src/lib/format.ts (bits per second), so app and notification agree. */
   private fun rate(bytesPerSecond: Double, tr: Boolean): String {
     val locale = if (tr) Locale.forLanguageTag("tr-TR") else Locale.US
-    val v = maxOf(0.0, bytesPerSecond)
+    val bits = maxOf(0.0, bytesPerSecond) * 8
     return when {
-      v >= 1024 * 1024 -> String.format(locale, "%.1f MB/s", v / (1024 * 1024))
-      v >= 1024 -> String.format(locale, "%.0f KB/s", v / 1024)
-      else -> String.format(locale, "%.0f B/s", v)
+      bits < 1_000 -> String.format(locale, "%.0f bps", bits)
+      bits < 1_000_000 -> String.format(locale, if (bits < 10_000) "%.1f Kbps" else "%.0f Kbps", bits / 1_000)
+      else -> String.format(locale, if (bits < 10_000_000) "%.2f Mbps" else "%.1f Mbps", bits / 1_000_000)
     }
   }
 

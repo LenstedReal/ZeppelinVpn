@@ -55,6 +55,8 @@ declare class ZeppelinVpnNativeModule extends NativeModule<ZeppelinVpnEvents> {
   /** InMobi ads (2.4.0). Empty account ID = ads stay off. */
   adsInit(accountId: string, personalized: boolean): void;
   adsReady(): boolean;
+  /** 2.4.1: short text with the last SDK / interstitial / banner state, shown in Settings. */
+  adsStatus(): string;
   adsPreloadInterstitial(placementId: string): void;
   /** "closed" after the user closed the full-screen ad; "none" at once when no ad was ready. */
   adsShowInterstitial(): Promise<'closed' | 'none'>;

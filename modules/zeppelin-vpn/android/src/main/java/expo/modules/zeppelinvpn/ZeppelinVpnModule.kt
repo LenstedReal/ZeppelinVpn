@@ -209,6 +209,10 @@ class ZeppelinVpnModule : Module() {
       AdsManager.ready
     }
 
+    Function("adsStatus") {
+      AdsManager.statusText()
+    }
+
     Function("adsPreloadInterstitial") { placementId: String ->
       AdsManager.preloadInterstitial(appContext.currentActivity ?: context, placementId.trim().toLongOrNull() ?: 0L)
     }

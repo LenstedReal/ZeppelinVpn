@@ -34,6 +34,18 @@ object AdsManager {
   /** Called once when the shown interstitial closes (or fails to show); then the VPN connects. */
   private var onClosed: (() -> Unit)? = null
 
+  // 2.4.1: what happened last, shown in Settings so ad problems can be seen without a computer.
+  @Volatile private var sdkState = "off"
+  @Volatile private var interstitialState = "-"
+  @Volatile var bannerState = "-"
+  private var initTries = 0
+  private var loadRetries = 0
+  /** Interstitial asked for before the SDK finished starting; loaded as soon as it is up. */
+  private var pendingContext: Context? = null
+  private var pendingPlacement = 0L
+
+  fun statusText(): String = "SDK: $sdkState · Tam ekran: $interstitialState · Banner: $bannerState"
+
   private fun finishShow() {
     val cb = onClosed
     onClosed = null
@@ -55,10 +67,22 @@ object AdsManager {
           return@post
         }
         accountId = account
+        sdkState = "starting"
         InMobiSdk.init(context.applicationContext, account, consent(personalized), object : SdkInitializationListener {
           override fun onInitializationComplete(error: Error?) {
             ready = error == null
-            if (error != null) Log.w(TAG, "init failed: ${error.message}")
+            if (error != null) {
+              sdkState = "error: ${error.message}"
+              Log.w(TAG, "init failed: ${error.message}")
+              // Network may not be up yet: try again a few times.
+              if (initTries++ < 3) main.postDelayed({ init(context, account, personalized) }, 30_000)
+            } else {
+              sdkState = "ready"
+              val ctx = pendingContext
+              val id = pendingPlacement
+              pendingContext = null
+              if (ctx != null && id > 0L) preloadInterstitial(ctx, id)
+            }
           }
         })
       } catch (e: Throwable) {
@@ -72,9 +96,18 @@ object AdsManager {
     if (placementId <= 0L) return
     main.post {
       try {
-        if (!ready) return@post
+        if (!ready) {
+          // SDK still starting: remember it and load right after init (2.4.1).
+          pendingContext = context
+          pendingPlacement = placementId
+          interstitialState = "waiting for SDK"
+          return@post
+        }
         if (interstitial != null && interstitialPlacement == placementId) {
-          if (!interstitialLoaded) interstitial?.load()
+          if (!interstitialLoaded) {
+            interstitialState = "loading"
+            interstitial?.load()
+          }
           return@post
         }
         interstitialPlacement = placementId
@@ -82,15 +115,21 @@ object AdsManager {
         interstitial = InMobiInterstitial(context, placementId, object : InterstitialAdEventListener() {
           override fun onAdLoadSucceeded(ad: InMobiInterstitial, info: AdMetaInfo) {
             interstitialLoaded = true
+            loadRetries = 0
+            interstitialState = "ready"
           }
 
           override fun onAdLoadFailed(ad: InMobiInterstitial, status: InMobiAdRequestStatus) {
             interstitialLoaded = false
+            interstitialState = "error: ${status.statusCode} ${status.message ?: ""}".trim()
             Log.w(TAG, "interstitial load failed: ${status.message}")
+            // No fill is common: try again later, a limited number of times (2.4.1).
+            if (loadRetries++ < 10) main.postDelayed({ try { if (!interstitialLoaded) ad.load() } catch (_: Throwable) {} }, 60_000)
           }
 
           override fun onAdDismissed(ad: InMobiInterstitial) {
             interstitialLoaded = false
+            interstitialState = "shown, reloading"
             finishShow()
             main.postDelayed({ try { ad.load() } catch (_: Throwable) {} }, 2_000)
           }
@@ -100,7 +139,10 @@ object AdsManager {
             finishShow()
             main.postDelayed({ try { ad.load() } catch (_: Throwable) {} }, 2_000)
           }
-        }).also { it.load() }
+        }).also {
+          interstitialState = "loading"
+          it.load()
+        }
       } catch (e: Throwable) {
         Log.w(TAG, "interstitial create threw", e)
       }

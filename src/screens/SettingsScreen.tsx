@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ZeppelinVpn from '../../modules/zeppelin-vpn';
@@ -14,6 +14,21 @@ export function SettingsScreen() {
   const { t, settings, updateSettings, lang } = app;
   const insets = useSafeAreaInsets();
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [adStatus, setAdStatus] = useState('');
+
+  // 2.4.1: live ad status, so a missing ad can be explained without a computer.
+  useEffect(() => {
+    const read = () => {
+      try {
+        setAdStatus(ZeppelinVpn ? ZeppelinVpn.adsStatus() : '');
+      } catch {
+        setAdStatus('');
+      }
+    };
+    read();
+    const timer = setInterval(read, 3000);
+    return () => clearInterval(timer);
+  }, []);
   const customInvalid = settings.dnsMode === 'custom' && parseDnsList(settings.customDns, isIP) === null;
 
   const confirmReset = () => {
@@ -213,6 +228,11 @@ export function SettingsScreen() {
         <Text style={styles.label} selectable>
           {t('settings.contact')}: contact.zeppelinvpn@proton.me
         </Text>
+        {adStatus ? (
+          <Text style={styles.help} selectable>
+            {t('settings.adsStatus')}: {adStatus}
+          </Text>
+        ) : null}
         <Text style={styles.help}>{t('settings.license')}</Text>
       </Card>
 

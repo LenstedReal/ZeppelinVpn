@@ -31,6 +31,14 @@ object AdsManager {
   private var interstitial: InMobiInterstitial? = null
   private var interstitialPlacement = 0L
   private var interstitialLoaded = false
+  /** Called once when the shown interstitial closes (or fails to show); then the VPN connects. */
+  private var onClosed: (() -> Unit)? = null
+
+  private fun finishShow() {
+    val cb = onClosed
+    onClosed = null
+    if (cb != null) main.post { try { cb() } catch (_: Throwable) {} }
+  }
 
   private fun consent(personalized: Boolean) = JSONObject().apply {
     put("gdpr_consent_available", personalized)
@@ -83,6 +91,13 @@ object AdsManager {
 
           override fun onAdDismissed(ad: InMobiInterstitial) {
             interstitialLoaded = false
+            finishShow()
+            main.postDelayed({ try { ad.load() } catch (_: Throwable) {} }, 2_000)
+          }
+
+          override fun onAdDisplayFailed(ad: InMobiInterstitial) {
+            interstitialLoaded = false
+            finishShow()
             main.postDelayed({ try { ad.load() } catch (_: Throwable) {} }, 2_000)
           }
         }).also { it.load() }
@@ -92,16 +107,28 @@ object AdsManager {
     }
   }
 
-  /** Shows the preloaded interstitial if it is ready. Returns false (and does nothing) otherwise. */
-  fun showInterstitial(activity: Activity?): Boolean {
+  /**
+   * Shows the preloaded interstitial if it is ready and calls [closed] when the user closes it.
+   * Returns false (and never calls [closed]) when no ad is ready: the caller connects at once then.
+   */
+  fun showInterstitial(activity: Activity?, closed: () -> Unit): Boolean {
     val ad = interstitial ?: return false
     if (activity == null || !interstitialLoaded) return false
     return try {
       if (!ad.isReady()) return false
       interstitialLoaded = false
-      main.post { try { ad.show() } catch (e: Throwable) { Log.w(TAG, "show threw", e) } }
+      onClosed = closed
+      main.post {
+        try {
+          ad.show()
+        } catch (e: Throwable) {
+          Log.w(TAG, "show threw", e)
+          finishShow()
+        }
+      }
       true
     } catch (e: Throwable) {
+      onClosed = null
       false
     }
   }

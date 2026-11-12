@@ -8,7 +8,7 @@ import { BUILTIN_SERVERS } from '../content/servers';
 import { isOfficial, mergeServers, parseServerList, SERVER_LIST_URL, type ServerEntry } from '../serverList';
 import { hasKey, translate, type Lang, type StringKey } from '../i18n/strings';
 import { checkExit, type ExitInfo } from '../lib/netcheck';
-import { INMOBI_ACCOUNT_ID, INMOBI_INTERSTITIAL_PLACEMENT, adsConfigured, interstitialAllowed } from '../ads/config';
+import { INMOBI_ACCOUNT_ID, INMOBI_INTERSTITIAL_PLACEMENT, INTERSTITIAL_MAX_WAIT_MS, adsConfigured, interstitialAllowed } from '../ads/config';
 
 export interface Profile {
   id: string;
@@ -78,8 +78,8 @@ interface AppStateValue {
   acceptDisclosure: () => void;
   declineDisclosure: () => void;
   disconnect: () => Promise<void>;
-  /** Disconnect from the home button; may show an interstitial afterwards (2.4.0). */
-  disconnectByUser: () => Promise<void>;
+  /** CONNECT button on the home screen: full-screen ad first (if one is ready), then connect (2.4.0). */
+  connectByUser: () => Promise<void>;
   reconnect: () => Promise<void>;
   errorText: string | null;
   clearError: () => void;
@@ -184,8 +184,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const autoConnectDone = useRef(false);
   const vaultRef = useRef(vault);
   vaultRef.current = vault;
-  const appStartedAt = useRef(Date.now());
   const lastInterstitialAt = useRef(0);
+  const adShowing = useRef(false);
 
   const systemLang = useMemo(deviceLanguage, []);
   const lang: Lang = settings.language === 'auto' ? systemLang : settings.language;
@@ -588,15 +588,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [ready, native, settings.adsPersonalized]);
 
-  /** Full-screen ad after the user disconnects (never before connecting), at most one per 10 minutes. */
-  const maybeShowInterstitial = useCallback(() => {
-    if (!native || !adsConfigured() || !INMOBI_INTERSTITIAL_PLACEMENT.trim()) return;
+  /**
+   * Full-screen ad shown when the user taps CONNECT, before the tunnel starts (at most one per 3 minutes).
+   * Resolves when the ad is closed, at once when no ad is ready, and after 90 s at the latest,
+   * so an ad can never keep the VPN from connecting.
+   */
+  const showAdBeforeConnect = useCallback(async () => {
+    if (!native || !adsConfigured() || !INMOBI_INTERSTITIAL_PLACEMENT.trim() || adShowing.current) return;
     const now = Date.now();
-    if (!interstitialAllowed(now, appStartedAt.current, lastInterstitialAt.current)) return;
+    if (!interstitialAllowed(now, lastInterstitialAt.current)) return;
+    adShowing.current = true;
     try {
-      if (native.adsShowInterstitial()) lastInterstitialAt.current = now;
+      const result = await Promise.race([
+        native.adsShowInterstitial(),
+        new Promise<'none'>((resolve) => setTimeout(() => resolve('none'), INTERSTITIAL_MAX_WAIT_MS)),
+      ]);
+      if (result === 'closed') lastInterstitialAt.current = Date.now();
       else native.adsPreloadInterstitial(INMOBI_INTERSTITIAL_PLACEMENT.trim());
-    } catch {}
+    } catch {
+    } finally {
+      adShowing.current = false;
+    }
   }, [native]);
 
   const disconnect = useCallback(async () => {
@@ -610,11 +622,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [native]);
 
-  /** The disconnect button on the home screen: same as disconnect, then maybe an ad. */
-  const disconnectByUser = useCallback(async () => {
-    await disconnect();
-    maybeShowInterstitial();
-  }, [disconnect, maybeShowInterstitial]);
+
+
+  // Only the CONNECT button shows the ad: automatic connects (app start, phone start, always-on,
+  // reconnects) never do. Before the first VPN disclosure is accepted no ad is shown either.
+  const connectByUser = useCallback(async () => {
+    if (settings.vpnDisclosureAccepted) await showAdBeforeConnect();
+    await connect();
+  }, [settings.vpnDisclosureAccepted, showAdBeforeConnect, connect]);
 
   const reconnect = useCallback(async () => {
     await disconnect();
@@ -717,7 +732,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     acceptDisclosure,
     declineDisclosure,
     disconnect,
-    disconnectByUser,
+    connectByUser,
     reconnect,
     errorText,
     clearError: () => setErrorText(null),

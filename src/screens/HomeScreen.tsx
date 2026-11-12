@@ -52,8 +52,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
   const tooOld = Platform.OS === 'android' && typeof Platform.Version === 'number' && Platform.Version < 26;
 
   const onButton = () => {
-    if (active) app.disconnectByUser();
-    else if (!tooOld) app.connect();
+    if (active) app.disconnect();
+    else if (!tooOld) app.connectByUser();
   };
 
   const profile = app.selectedProfile;

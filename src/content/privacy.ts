@@ -29,7 +29,7 @@ Diğer
 • DNS sorguları tünel içinden, seçtiğin DNS sunucusuna gider.
 • Çıkış IP kontrolü (isteğe bağlı, Ayarlar’dan kapatılabilir): bağlıyken https://1.1.1.1/cdn-cgi/trace adresine istek atılır; Cloudflare bu istekte çıkış IP’ni görür. Sonuç yalnızca ekranda gösterilir.
 • Durum bildirimi yalnızca telefonunda oluşturulur. Kilit ekranında ayrıntı göstermez, yalnızca “VPN açık” yazar.
-• Reklamlar (InMobi): uygulama ekranlarında banner ve bağlantıyı kestikten sonra en fazla 10 dakikada bir tam ekran reklam gösterilir. Reklam için InMobi'ye reklam kimliği, IP adresi, cihaz modeli, Android sürümü, dil ve reklam etkileşimleri gider. VPN trafiğin, ziyaret ettiğin siteler ve profillerin hiçbir zaman reklam şirketine gitmez. Varsayılan olarak reklamlar kişiselleştirilmez; Ayarlar → Gizlilik → Kişiselleştirilmiş reklamlar ile açabilirsin. Reklam kimliğini Android ayarlarından sıfırlayabilir ya da silebilirsin. InMobi gizlilik politikası: https://www.inmobi.com/privacy-policy
+• Reklamlar (InMobi): ana ekranda banner, BAĞLAN'a bastığında da bağlanmadan önce tam ekran reklam gösterilir (en fazla 3 dakikada bir; otomatik bağlanmalarda gösterilmez). Reklam için InMobi'ye reklam kimliği, IP adresi, cihaz modeli, Android sürümü, dil ve reklam etkileşimleri gider. VPN trafiğin, ziyaret ettiğin siteler ve profillerin hiçbir zaman reklam şirketine gitmez. Varsayılan olarak reklamlar kişiselleştirilmez; Ayarlar → Gizlilik → Kişiselleştirilmiş reklamlar ile açabilirsin. Reklam kimliğini Android ayarlarından sıfırlayabilir ya da silebilirsin. InMobi gizlilik politikası: https://www.inmobi.com/privacy-policy
 • Analiz, izleme veya çökme raporlama kütüphanesi yok. Hesap yok.
 
 İzinler
@@ -71,7 +71,7 @@ Other
 • DNS queries go through the tunnel to the DNS server you chose.
 • Exit IP check (optional, can be turned off in Settings): while connected the app requests https://1.1.1.1/cdn-cgi/trace; Cloudflare sees your exit IP in that request. The result is only shown on screen.
 • The status notification is created only on your phone. On the lock screen it shows no details, only “VPN is on”.
-• Ads (InMobi): the app screens show a banner and, after you disconnect, at most one full-screen ad every 10 minutes. For ads, InMobi receives the advertising ID, IP address, device model, Android version, language and ad interactions. Your VPN traffic, the sites you visit and your profiles never go to the ad company. By default ads are not personalised; turn it on in Settings → Privacy → Personalised ads. You can reset or delete the advertising ID in Android settings. InMobi privacy policy: https://www.inmobi.com/privacy-policy
+• Ads (InMobi): the home screen shows a banner, and tapping CONNECT shows a full-screen ad before connecting (at most one every 3 minutes; never on automatic connects). For ads, InMobi receives the advertising ID, IP address, device model, Android version, language and ad interactions. Your VPN traffic, the sites you visit and your profiles never go to the ad company. By default ads are not personalised; turn it on in Settings → Privacy → Personalised ads. You can reset or delete the advertising ID in Android settings. InMobi privacy policy: https://www.inmobi.com/privacy-policy
 • No analytics, tracking or crash-reporting libraries. No account.
 
 Permissions

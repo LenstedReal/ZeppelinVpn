@@ -213,8 +213,10 @@ class ZeppelinVpnModule : Module() {
       AdsManager.preloadInterstitial(appContext.currentActivity ?: context, placementId.trim().toLongOrNull() ?: 0L)
     }
 
-    Function("adsShowInterstitial") {
-      AdsManager.showInterstitial(appContext.currentActivity)
+    // Resolves "closed" after the user closes the ad, or "none" at once when no ad is ready.
+    AsyncFunction("adsShowInterstitial") { promise: Promise ->
+      val shown = AdsManager.showInterstitial(appContext.currentActivity) { promise.resolve("closed") }
+      if (!shown) promise.resolve("none")
     }
 
     View(ZeppelinBannerView::class) {

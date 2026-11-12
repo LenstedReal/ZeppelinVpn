@@ -66,7 +66,7 @@ Soru, istek ve şikâyetler için: [contact.zeppelinvpn@proton.me](mailto:contac
 
 ## Reklamlar
 
-2.4.0'dan itibaren InMobi reklamları: ana ekranda 320x50 banner ve bağlantı kesildikten sonra en fazla 10 dakikada bir tam ekran reklam (uygulama açıldıktan sonraki ilk dakikada hiç yok). Reklamlar tünele dokunmaz, bağlanmayı engellemez; bağlanmadan önce reklam gösterilmez.
+2.4.0'dan itibaren InMobi reklamları: ana ekranda 320x50 banner; BAĞLAN'a basınca, tünel kurulmadan önce tam ekran reklam (en fazla 3 dakikada bir). Reklam kapanınca bağlanılır; hazır reklam yoksa hemen bağlanılır, reklam kapanma bildirmezse en geç 90 saniyede bağlanılır. Otomatik bağlanmalarda (açılışta, telefon açılınca, her zaman açık VPN, yeniden bağlanma) ve VPN açıklaması ilk kez kabul edilmeden reklam gösterilmez. Reklamlar tünele dokunmaz.
 
 | | |
 |---|---|

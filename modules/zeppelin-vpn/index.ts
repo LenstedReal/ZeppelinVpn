@@ -56,8 +56,8 @@ declare class ZeppelinVpnNativeModule extends NativeModule<ZeppelinVpnEvents> {
   adsInit(accountId: string, personalized: boolean): void;
   adsReady(): boolean;
   adsPreloadInterstitial(placementId: string): void;
-  /** true when an interstitial was shown; false when none was ready (nothing happens then). */
-  adsShowInterstitial(): boolean;
+  /** "closed" after the user closed the full-screen ad; "none" at once when no ad was ready. */
+  adsShowInterstitial(): Promise<'closed' | 'none'>;
 }
 
 /** null when running without the native code (Expo Go, web). The UI shows a notice then. */

@@ -5,16 +5,11 @@ import { DEFAULT_SETTINGS, sanitizeSettings } from '../src/settings.ts';
 
 const MIN = 60_000;
 
-test('interstitial: never in the first minute after the app opens', () => {
-  assert.equal(interstitialAllowed(30_000, 0, 0), false);
-  assert.equal(interstitialAllowed(61_000, 0, 0), true);
-});
-
-test('interstitial: at most one per 10 minutes', () => {
-  const start = 0;
+test('interstitial: first connect always allowed, then at most one per 3 minutes', () => {
+  assert.equal(interstitialAllowed(1_000, 0), true);
   const shown = 5 * MIN;
-  assert.equal(interstitialAllowed(shown + 9 * MIN, start, shown), false);
-  assert.equal(interstitialAllowed(shown + 10 * MIN, start, shown), true);
+  assert.equal(interstitialAllowed(shown + 2 * MIN, shown), false);
+  assert.equal(interstitialAllowed(shown + 3 * MIN, shown), true);
 });
 
 test('personalised ads are off by default and survive sanitizing', () => {

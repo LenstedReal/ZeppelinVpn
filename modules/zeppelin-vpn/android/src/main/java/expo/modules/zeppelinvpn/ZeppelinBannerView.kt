@@ -31,6 +31,7 @@ class ZeppelinBannerView(context: Context, appContext: AppContext) : ExpoView(co
       banner?.let { removeView(it); it.destroy() }
       banner = null
       if (placementId <= 0L || !AdsManager.ready) {
+        AdsManager.bannerState = "SDK not ready"
         onAdState(mapOf("state" to "failed"))
         return
       }
@@ -41,16 +42,19 @@ class ZeppelinBannerView(context: Context, appContext: AppContext) : ExpoView(co
       b.setRefreshInterval(60)
       b.setListener(object : BannerAdEventListener() {
         override fun onAdLoadSucceeded(ad: InMobiBanner, info: AdMetaInfo) {
+          AdsManager.bannerState = "shown"
           onAdState(mapOf("state" to "loaded"))
         }
 
         override fun onAdLoadFailed(ad: InMobiBanner, status: InMobiAdRequestStatus) {
+          AdsManager.bannerState = "error: ${status.statusCode} ${status.message ?: ""}".trim()
           Log.w("ZeppelinAds", "banner load failed: ${status.message}")
           onAdState(mapOf("state" to "failed"))
         }
       })
       addView(b, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
       banner = b
+      AdsManager.bannerState = "loading"
       b.load()
     } catch (e: Throwable) {
       Log.w("ZeppelinAds", "banner threw", e)

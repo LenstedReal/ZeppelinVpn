@@ -9,6 +9,7 @@ import { describe as describeCfg, parseConfig } from '../wireguard/config';
 import { flagEmoji, formatAgo, formatBytes, formatDuration, formatRate } from '../lib/format';
 import type { Tab } from '../components/TabBar';
 import { isOfficial } from '../serverList';
+import { AdBanner } from '../ads/AdBanner';
 
 const logo = require('../../assets/logo.png');
 
@@ -51,7 +52,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
   const tooOld = Platform.OS === 'android' && typeof Platform.Version === 'number' && Platform.Version < 26;
 
   const onButton = () => {
-    if (active) app.disconnect();
+    if (active) app.disconnectByUser();
     else if (!tooOld) app.connect();
   };
 
@@ -230,6 +231,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
           </View>
         </Notice>
       ) : null}
+
+      <AdBanner />
     </Screen>
   );
 }

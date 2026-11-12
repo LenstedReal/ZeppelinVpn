@@ -4,14 +4,14 @@ plugins {
 }
 
 group = 'com.lenstedreal.zeppelinvpn'
-version = '2.3.1'
+version = '2.4.0'
 
 android {
   namespace "expo.modules.zeppelinvpn"
 
   defaultConfig {
     versionCode 1
-    versionName "2.3.1"
+    versionName "2.4.0"
     // Keeps the WireGuard JNI classes when the app is built with R8 (on by default since Expo SDK 58).
     consumerProguardFiles "consumer-rules.pro"
   }
@@ -22,4 +22,13 @@ dependencies {
   // Published by the WireGuard project on Maven Central. Replaces the unverified
   // "tunnel-norecord.aar" that the old Kotlin app shipped inside the repository.
   implementation "com.wireguard.android:tunnel:1.0.20260102"
+
+  // InMobi ads (2.4.0). Closed-source SDK; see README "Reklamlar" and the GPL linking exception in LICENSE.
+  // Versions from InMobi's Android integration guide. okhttp/okio are left to Gradle so React Native's
+  // newer okhttp 4 wins over InMobi's listed 3.x (forcing 3.x would break React Native networking).
+  implementation "com.inmobi.monetization:inmobi-ads-kotlin:11.5.1"
+  implementation "com.google.android.gms:play-services-ads-identifier:18.0.1"
+  implementation "androidx.browser:browser:1.8.0"      // ad requests fail without it
+  implementation "com.squareup.picasso:picasso:2.8"     // interstitial requests fail without it
+  implementation "androidx.media3:media3-exoplayer:1.4.1" // video ads
 }

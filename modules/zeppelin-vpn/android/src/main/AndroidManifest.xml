@@ -7,6 +7,8 @@
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <!-- Live status notification (asked at runtime on Android 13+). -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- InMobi ads (2.4.0): Android advertising ID. Users can reset or delete it in Android settings. -->
+  <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
   <application>
     <!--

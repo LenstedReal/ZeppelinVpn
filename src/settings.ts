@@ -34,6 +34,8 @@ export interface Settings {
   serverListUpdate: boolean;
   /** Community servers the user agreed to use after the operator warning. */
   trustedServers: string[];
+  /** InMobi may personalise ads (2.4.0). Off by default: ads are shown without personal targeting. */
+  adsPersonalized: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -53,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notificationAsked: false,
   serverListUpdate: true,
   trustedServers: [],
+  adsPersonalized: false,
 };
 
 /** IPv4 resolvers only: profiles from our server script are IPv4-only tunnels. */
@@ -100,6 +103,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     notificationAsked: bool(r.notificationAsked, d.notificationAsked),
     serverListUpdate: bool(r.serverListUpdate, d.serverListUpdate),
     trustedServers: serverIds(r.trustedServers),
+    adsPersonalized: bool(r.adsPersonalized, d.adsPersonalized),
   };
 }
 

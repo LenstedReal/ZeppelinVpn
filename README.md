@@ -1,6 +1,6 @@
 # Zeppelin VPN 2.1 (Expo) — by LenstedReal
 
-**Hızlı. Şifreli. Kayıt tutmaz.** Zeppelin VPN, LenstedReal'in geliştirdiği açık kaynaklı bir Android WireGuard VPN uygulamasıdır. Üç yolla kullanılır: LenstedReal'in işlettiği hazır sunuculara tek dokunuşla bağlanırsın (şu an: Frankfurt), LenstedReal'in onayladığı **topluluk sunucularını** kullanırsın ya da kendi WireGuard sunucunu (örneğin ücretsiz Oracle Cloud sunucusu) kurup profilini eklersin. Hesap istemez, reklam veya izleme kütüphanesi içermez, trafik kaydı tutmaz.
+**Hızlı. Şifreli. Kayıt tutmaz.** Zeppelin VPN, LenstedReal'in geliştirdiği açık kaynaklı bir Android WireGuard VPN uygulamasıdır. Üç yolla kullanılır: LenstedReal'in işlettiği hazır sunuculara tek dokunuşla bağlanırsın (şu an: Frankfurt), LenstedReal'in onayladığı **topluluk sunucularını** kullanırsın ya da kendi WireGuard sunucunu (örneğin ücretsiz Oracle Cloud sunucusu) kurup profilini eklersin. Hesap istemez, trafik kaydı tutmaz. 2.4.0'dan itibaren uygulama ekranlarında InMobi reklamları vardır (varsayılan olarak kişiselleştirilmemiş); VPN trafiği hiçbir zaman reklam şirketine gitmez. Ayrıntı: [Reklamlar](#reklamlar).
 
 > English summary: Android WireGuard VPN app by LenstedReal. Connect to ready servers run by the developer or to your own server. Expo (React Native + TypeScript) UI, a Kotlin module that wraps the official WireGuard tunnel library, a live status notification, a one-command Oracle Cloud server script with an optional shared-server registration API, and a GitHub Actions build that produces a signed APK and AAB. Architecture: [docs/MIMARI_TR.md](docs/MIMARI_TR.md).
 
@@ -64,9 +64,22 @@ Sunucu betiğini değiştirirsen uygulamadaki kopyayı yenile: `npm run embed-se
 
 Soru, istek ve şikâyetler için: [contact.zeppelinvpn@proton.me](mailto:contact.zeppelinvpn@proton.me). Hata bildirimi ve sunucu önerileri için GitHub Issues da kullanılabilir.
 
+## Reklamlar
+
+2.4.0'dan itibaren InMobi reklamları: ana ekranda 320x50 banner; BAĞLAN'a basınca, tünel kurulmadan önce tam ekran reklam (en fazla 3 dakikada bir). Reklam kapanınca bağlanılır; hazır reklam yoksa hemen bağlanılır, reklam kapanma bildirmezse en geç 90 saniyede bağlanılır. Otomatik bağlanmalarda (açılışta, telefon açılınca, her zaman açık VPN, yeniden bağlanma) ve VPN açıklaması ilk kez kabul edilmeden reklam gösterilmez. Reklamlar tünele dokunmaz.
+
+| | |
+|---|---|
+| Kimlikler | `src/ads/config.ts`: `INMOBI_ACCOUNT_ID`, `INMOBI_BANNER_PLACEMENT`, `INMOBI_INTERSTITIAL_PLACEMENT`. Hesap kimliği boşken hiç reklam isteği yapılmaz. |
+| Rıza | InMobi'ye her açılışta `gdpr = "1"` gönderilir; `gdpr_consent_available`, Ayarlar → Gizlilik → Kişiselleştirilmiş reklamlar anahtarına bağlıdır (varsayılan kapalı). |
+| Kod | `modules/zeppelin-vpn/android/.../AdsManager.kt`, `ZeppelinBannerView.kt`; `src/ads/` |
+| Kapatmak | Kimlikleri boşaltmak reklamları tamamen kapatır; SDK yine pakette kalır. |
+
 ## Lisans
 
 Zeppelin VPN açık kaynaktır: **GNU GPL v3 veya sonrası** ([LICENSE](LICENSE)). Copyright (C) 2026 LenstedReal.
+
+**Ek izin (GPL-3.0 §7):** telif hakkı sahibi LenstedReal, bu programın InMobi Ads SDK (`com.inmobi.monetization:inmobi-ads-kotlin`) ve onun bağımlılıklarıyla birlikte derlenip dağıtılmasına izin verir; bu kütüphanelerin kaynak kodunu açma şartı aranmaz. Bu izin yalnızca InMobi SDK için geçerlidir; programın kendi kodu GPL altında kalır.
 
 Kodu kullanabilir, değiştirebilir ve dağıtabilirsin. Değiştirilmiş bir sürüm dağıtıyorsan onun kaynak kodunu da aynı lisansla açman gerekir. Böylece kimse bu kodun içine izleme ekleyip kapalı bir VPN olarak dağıtamaz.
 

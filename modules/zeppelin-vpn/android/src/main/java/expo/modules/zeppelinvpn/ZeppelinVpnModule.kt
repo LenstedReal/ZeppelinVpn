@@ -200,6 +200,32 @@ class ZeppelinVpnModule : Module() {
       }
     }
 
+    // ---- InMobi ads (2.4.0). Account / placement IDs come from src/ads/config.ts; empty IDs = no ads.
+    Function("adsInit") { accountId: String, personalized: Boolean ->
+      AdsManager.init(context, accountId, personalized)
+    }
+
+    Function("adsReady") {
+      AdsManager.ready
+    }
+
+    Function("adsPreloadInterstitial") { placementId: String ->
+      AdsManager.preloadInterstitial(appContext.currentActivity ?: context, placementId.trim().toLongOrNull() ?: 0L)
+    }
+
+    // Resolves "closed" after the user closes the ad, or "none" at once when no ad is ready.
+    AsyncFunction("adsShowInterstitial") { promise: Promise ->
+      val shown = AdsManager.showInterstitial(appContext.currentActivity) { promise.resolve("closed") }
+      if (!shown) promise.resolve("none")
+    }
+
+    View(ZeppelinBannerView::class) {
+      Events("onAdState")
+      Prop("placementId") { view: ZeppelinBannerView, id: String ->
+        view.setPlacement(id)
+      }
+    }
+
     OnActivityResult { _, payload ->
       when (payload.requestCode) {
         REQUEST_VPN -> {

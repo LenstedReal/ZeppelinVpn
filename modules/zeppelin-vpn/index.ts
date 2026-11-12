@@ -1,4 +1,6 @@
-import { NativeModule, requireOptionalNativeModule } from 'expo-modules-core';
+import type { ComponentType } from 'react';
+import type { ViewProps } from 'react-native';
+import { NativeModule, requireNativeViewManager, requireOptionalNativeModule } from 'expo-modules-core';
 
 export type TunnelState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'no_network' | 'error';
 
@@ -50,12 +52,28 @@ declare class ZeppelinVpnNativeModule extends NativeModule<ZeppelinVpnEvents> {
   generateKeyPair(): { privateKey: string; publicKey: string };
   deviceLanguage(): string;
   appVersion(): string;
+  /** InMobi ads (2.4.0). Empty account ID = ads stay off. */
+  adsInit(accountId: string, personalized: boolean): void;
+  adsReady(): boolean;
+  adsPreloadInterstitial(placementId: string): void;
+  /** "closed" after the user closed the full-screen ad; "none" at once when no ad was ready. */
+  adsShowInterstitial(): Promise<'closed' | 'none'>;
 }
 
 /** null when running without the native code (Expo Go, web). The UI shows a notice then. */
 const ZeppelinVpn = requireOptionalNativeModule<ZeppelinVpnNativeModule>('ZeppelinVpn');
 
 export default ZeppelinVpn;
+
+export type BannerProps = ViewProps & {
+  placementId: string;
+  onAdState?: (e: { nativeEvent: { state: 'loaded' | 'failed' } }) => void;
+};
+
+/** Native InMobi 320x50 banner; null without the native code. */
+export const NativeBanner: ComponentType<BannerProps> | null = ZeppelinVpn
+  ? requireNativeViewManager<BannerProps>('ZeppelinVpn')
+  : null;
 
 export const EMPTY_STATUS: TunnelStatus = {
   state: 'disconnected',

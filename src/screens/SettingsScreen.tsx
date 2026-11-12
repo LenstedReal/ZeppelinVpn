@@ -193,6 +193,12 @@ export function SettingsScreen() {
           value={settings.serverListUpdate}
           onChange={(serverListUpdate) => updateSettings({ serverListUpdate })}
         />
+        <ToggleRow
+          label={t('settings.adsPersonalized')}
+          description={t('settings.adsPersonalized.desc')}
+          value={settings.adsPersonalized}
+          onChange={(adsPersonalized) => updateSettings({ adsPersonalized })}
+        />
         <Button label={t('settings.privacyPolicy')} small onPress={() => setPrivacyOpen(true)} style={styles.inlineButton} />
       </Card>
 

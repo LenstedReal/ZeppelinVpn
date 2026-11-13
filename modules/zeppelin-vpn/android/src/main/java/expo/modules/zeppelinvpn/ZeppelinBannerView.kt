@@ -64,6 +64,8 @@ class ZeppelinBannerView(context: Context, appContext: AppContext) : ExpoView(co
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
+    // Leaving the screen while a banner was still loading cancels it; say so instead of leaving "loading" in Settings.
+    if (AdsManager.bannerState == "loading") AdsManager.bannerState = "cancelled (screen closed)"
     try { banner?.destroy() } catch (_: Throwable) {}
     banner = null
     placementId = 0L
